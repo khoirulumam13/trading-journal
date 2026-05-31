@@ -102,6 +102,7 @@ textarea{resize:vertical;min-height:70px;}
 .db,.eb{background:none;border:none;cursor:pointer;font-size:14px;padding:3px 4px;border-radius:4px;}
 .db{color:var(--hint);}.db:hover{color:var(--red);}
 .eb{color:var(--hint);}.eb:hover{color:var(--blue);}
+.rb{background:none;border:none;cursor:pointer;font-size:14px;padding:3px 4px;border-radius:4px;color:var(--hint);}.rb:hover{color:var(--green);}
 .nt{text-align:center;padding:3rem;color:var(--muted);}
 .eq-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
 .eq-lbl{width:150px;font-size:11px;color:var(--muted);flex-shrink:0;}
@@ -238,6 +239,59 @@ textarea{resize:vertical;min-height:70px;}
     <div class="modal-actions">
       <button class="btn-warn" onclick="closeEdit()">Cancel</button>
       <button class="btn-p" onclick="saveEdit()"><i class="ti ti-check"></i> Save changes</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- REVIEW MODAL -->
+<div class="modal-overlay" id="review-modal">
+  <div class="modal" style="max-width:780px;">
+    <div class="modal-hdr">
+      <div class="modal-title" id="rv-title">Trade Review</div>
+      <button class="close-btn" onclick="closeReview()">&#x2715;</button>
+    </div>
+
+    <!-- header chips -->
+    <div class="chips" id="rv-chips" style="margin-bottom:1rem;"></div>
+
+    <!-- two col: fields + screenshots -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1rem;">
+      <div>
+        <div class="ana-card-title" style="margin-bottom:.75rem;">Trade details</div>
+        <div class="ec-fields" id="rv-fields"></div>
+      </div>
+      <div>
+        <div class="ana-card-title" style="margin-bottom:.75rem;">Screenshots <span id="rv-ss-counter" style="font-weight:400;color:var(--muted);font-size:11px;"></span></div>
+        <!-- slideshow -->
+        <div id="rv-ss-wrap" style="position:relative;aspect-ratio:4/3;background:var(--bg);border-radius:var(--r);overflow:hidden;border:.5px solid var(--border);">
+          <img id="rv-ss-img" src="" alt="Screenshot" style="width:100%;height:100%;object-fit:contain;cursor:pointer;" onclick="openLb(document.getElementById('rv-ss-img').src)">
+          <div id="rv-ss-empty" style="display:none;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--hint);font-size:13px;flex-direction:column;gap:8px;">
+            <i class="ti ti-photo-off" style="font-size:32px;"></i>No screenshots
+          </div>
+          <button id="rv-prev" onclick="slideNav(-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.45);border:none;color:#fff;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;"><i class="ti ti-chevron-left"></i></button>
+          <button id="rv-next" onclick="slideNav(1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.45);border:none;color:#fff;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;"><i class="ti ti-chevron-right"></i></button>
+        </div>
+        <!-- dots -->
+        <div id="rv-dots" style="display:flex;gap:6px;justify-content:center;margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <!-- psychology & notes -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:.5rem;" id="rv-notes-wrap">
+      <div id="rv-psych-wrap" style="display:none;">
+        <div class="ana-card-title" style="margin-bottom:.5rem;">Psychology notes</div>
+        <div id="rv-psych" style="font-size:12px;color:var(--muted);line-height:1.6;background:var(--bg);padding:10px 12px;border-radius:var(--r);border:.5px solid var(--border);"></div>
+      </div>
+      <div id="rv-notes-box" style="display:none;">
+        <div class="ana-card-title" style="margin-bottom:.5rem;">Trade notes</div>
+        <div id="rv-notes" style="font-size:12px;color:var(--muted);line-height:1.6;background:var(--bg);padding:10px 12px;border-radius:var(--r);border:.5px solid var(--border);"></div>
+      </div>
+    </div>
+
+    <div class="modal-actions" style="border-top:.5px solid var(--border);padding-top:1rem;margin-top:.5rem;">
+      <button class="btn-s" onclick="closeReview()">Close</button>
+      <button class="btn-p" onclick="closeReview();openEdit(currentReviewId)"><i class="ti ti-edit"></i> Edit trade</button>
     </div>
   </div>
 </div>
@@ -554,6 +608,83 @@ function clearForm(){
   emo='';bval='';imgs=[];renderSS();
 }
 
+
+/* REVIEW */
+let currentReviewId=null, slideImgs=[], slideIdx=0;
+
+function openReview(id){
+  const t=trades.find(t=>t.id==id);if(!t)return;
+  currentReviewId=id;
+  const rb=t.result==='Win'?'bw':t.result==='Loss'?'bl':'bbe';
+  const pc=(+t.pnl||0)>0?'pp':(+t.pnl||0)<0?'pn':'';
+
+  g('rv-title').textContent=(t.asset||'Trade')+' — '+fixDate(t.date);
+
+  g('rv-chips').innerHTML=`
+    ${t.account?`<span class="badge ${t.account==='Evaluation'?'bev':'bfu'}">${t.account}</span>`:''}
+    ${t.session?`<span class="chip" style="padding:3px 10px;font-size:11px;">${t.session}</span>`:''}
+    ${bDir(t.dir)}
+    ${t.result?`<span class="badge ${rb}">${t.result}</span>`:''}
+    ${t.pnl?`<span class="${pc}" style="font-size:14px;font-weight:500;">${ps(t.pnl)}</span>`:''}
+    ${t.time?`<span style="font-size:12px;color:var(--muted);">${t.time}</span>`:''}
+  `;
+
+  g('rv-fields').innerHTML=`
+    <div class="ef"><div class="ef-l">Daily bias</div><div class="ef-v">${t.bias||'—'}</div></div>
+    <div class="ef"><div class="ef-l">Daily profile</div><div class="ef-v">${t.profile||'—'}</div></div>
+    <div class="ef"><div class="ef-l">CIC</div><div class="ef-v">${t.cic||'—'}</div></div>
+    <div class="ef"><div class="ef-l">Entry model</div><div class="ef-v">${t.entryModel||'—'}</div></div>
+    <div class="ef"><div class="ef-l">Time frame</div><div class="ef-v">${t.tf||'—'}</div></div>
+    <div class="ef"><div class="ef-l">R:R planned</div><div class="ef-v">${t.rrPlan?t.rrPlan+'R':'—'}</div></div>
+    <div class="ef"><div class="ef-l">R:R achieved</div><div class="ef-v">${t.rr?t.rr+'R':'—'}</div></div>
+    <div class="ef"><div class="ef-l">Risk</div><div class="ef-v">${t.risk?'$'+(+t.risk).toFixed(0):'—'}</div></div>
+    <div class="ef"><div class="ef-l">Profit</div><div class="ef-v">${t.profit?ps(t.profit):'—'}</div></div>
+  `;
+
+  // screenshots
+  slideImgs=t.imgs||[];slideIdx=0;
+  renderSlide();
+
+  // psychology & notes
+  if(t.psych){g('rv-psych-wrap').style.display='block';g('rv-psych').textContent=t.psych;}
+  else{g('rv-psych-wrap').style.display='none';}
+  if(t.notes){g('rv-notes-box').style.display='block';g('rv-notes').textContent=t.notes;}
+  else{g('rv-notes-box').style.display='none';}
+
+  g('review-modal').classList.add('open');
+}
+
+function renderSlide(){
+  const total=slideImgs.length;
+  if(total===0){
+    g('rv-ss-img').style.display='none';
+    g('rv-ss-empty').style.display='flex';
+    g('rv-prev').style.display='none';
+    g('rv-next').style.display='none';
+    g('rv-ss-counter').textContent='';
+    g('rv-dots').innerHTML='';
+    return;
+  }
+  g('rv-ss-img').style.display='block';
+  g('rv-ss-empty').style.display='none';
+  g('rv-prev').style.display=total>1?'flex':'none';
+  g('rv-next').style.display=total>1?'flex':'none';
+  g('rv-ss-img').src=slideImgs[slideIdx];
+  g('rv-ss-counter').textContent=`(${slideIdx+1} / ${total})`;
+  g('rv-dots').innerHTML=slideImgs.map((_,i)=>
+    `<div onclick="goSlide(${i})" style="width:${i===slideIdx?20:8}px;height:8px;border-radius:4px;background:${i===slideIdx?'var(--green)':'var(--border-s)'};cursor:pointer;transition:all .2s;"></div>`
+  ).join('');
+}
+
+function slideNav(dir){
+  slideIdx=(slideIdx+dir+slideImgs.length)%slideImgs.length;
+  renderSlide();
+}
+
+function goSlide(i){slideIdx=i;renderSlide();}
+
+function closeReview(){g('review-modal').classList.remove('open');currentReviewId=null;}
+
 /* EDIT */
 function openEdit(id){
   const t=trades.find(t=>t.id==id);if(!t)return;
@@ -691,6 +822,7 @@ function renderLog(){
       <span class="${pc}">${ps(t.pnl)}</span>
       <span style="color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.notes||''}</span>
       <div class="tr-actions">
+        <button class="rb" onclick="openReview(${t.id})" title="Review"><i class="ti ti-eye"></i></button>
         <button class="eb" onclick="openEdit(${t.id})" title="Edit"><i class="ti ti-edit"></i></button>
         <button class="db" onclick="deleteTrade(${t.id})" title="Delete"><i class="ti ti-trash"></i></button>
       </div>
