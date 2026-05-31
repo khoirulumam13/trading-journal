@@ -741,7 +741,7 @@ function renderAnalytics(){
     <div class="sc"><div class="sl">Trades</div><div class="sv">${tot}</div></div>
     <div class="sc"><div class="sl">Win rate</div><div class="sv ${wr&&wr.wr>=50?'g':'r'}">${wr?wr.wr+'%':'—'}</div></div>
     <div class="sc"><div class="sl">Total P&L</div><div class="sv ${totalPnl>=0?'g':'r'}">${ps(totalPnl)}</div></div>
-    <div class="sc"><div class="sl">Total profit</div><div class="sv g">${'+$'+totalProfit.toFixed(2)}</div></div>
+    <div class="sc"><div class="sl">Total profit</div><div class="sv ${totalProfit>=0?'g':'r'}">${ps(totalProfit)}</div></div>
   `;
 
   if(!tot){
@@ -803,7 +803,7 @@ function renderStats(){
   const fu=trades.filter(t=>t.account==='Funded').reduce((a,t)=>a+(+t.pnl||0),0);
   g('s-wr').textContent=Math.round(w/n*100)+'%';
   g('s-pnl').textContent=ps(tp);g('s-pnl').className='sv '+(tp>=0?'g':'r');
-  g('s-pr').textContent='+$'+tpr.toFixed(2);
+  g('s-pr').textContent=ps(tpr); g('s-pr').className='sv '+(tpr>=0?'g':'r');
   g('s-rrp').textContent=rrps.length?(rrps.reduce((a,b)=>a+b,0)/rrps.length).toFixed(2)+'R':'—';
   g('s-rr').textContent=rrs.length?(rrs.reduce((a,b)=>a+b,0)/rrs.length).toFixed(2)+'R':'—';
   g('s-best').textContent='+$'+best.toFixed(2);
