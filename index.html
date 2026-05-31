@@ -512,6 +512,20 @@ let cy,cm;
 const now=new Date();
 cy=now.getFullYear();cm=now.getMonth();
 
+
+function fixTime(t){
+  if(!t) return '';
+  const s=String(t);
+  // handle "1899-12-31T03:00:00.000Z" format from Sheets
+  if(s.includes('T') && s.includes('1899')){
+    const match=s.match(/T(\d{2}:\d{2})/);
+    return match?match[1]:'';
+  }
+  // handle normal HH:MM or HH:MM:SS
+  if(s.match(/^\d{2}:\d{2}/)) return s.slice(0,5);
+  return s;
+}
+
 function fixDate(d){if(!d)return'';return String(d).slice(0,10);}
 function g(id){return document.getElementById(id);}
 function ps(v){v=+v||0;return v>0?'+$'+v.toFixed(2):v<0?'-$'+Math.abs(v).toFixed(2):'$0';}
@@ -531,7 +545,7 @@ async function loadSheets(){
     const r=await fetch(GS+'?t='+Date.now());
     const d=await r.json();
     if(d.trades){
-      trades=d.trades.map(t=>({...t,date:fixDate(t.date),pnl:+t.pnl||0,profit:+t.profit||0,risk:+t.risk||0,rrPlan:+t.rrPlan||0,rr:+t.rr||0,imgs:[]}));
+      trades=d.trades.map(t=>({...t,date:fixDate(t.date),time:fixTime(t.time),pnl:+t.pnl||0,profit:+t.profit||0,risk:+t.risk||0,rrPlan:+t.rrPlan||0,rr:+t.rr||0,imgs:[]}));
       trades.sort((a,b)=>b.id-a.id);
       localStorage.setItem('ftj',JSON.stringify(trades));
       updateH();setSS('synced','Synced · '+trades.length+' trades');
