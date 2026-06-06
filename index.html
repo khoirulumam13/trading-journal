@@ -95,7 +95,7 @@ textarea{resize:vertical;min-height:70px;}
 .log-bar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;}
 .log-bar select{font-size:12px;padding:6px 10px;width:auto;}
 .tt{background:var(--surface);border:.5px solid var(--border);border-radius:var(--rl);overflow:hidden;}
-.tr{display:grid;grid-template-columns:90px 58px 70px 68px 82px 54px 40px 60px 52px 52px 60px 70px 1fr 60px;gap:5px;align-items:center;padding:9px 12px;border-bottom:.5px solid var(--border);font-size:11px;}
+.tr{display:grid;grid-template-columns:90px 58px 70px 68px 82px 54px 70px 40px 60px 52px 52px 56px 66px 60px;gap:5px;align-items:center;padding:9px 12px;border-bottom:.5px solid var(--border);font-size:11px;}
 .tr:last-child{border-bottom:none;}
 .tr.th{font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;background:var(--bg);}
 .tr-actions{display:flex;gap:4px;}
@@ -175,6 +175,7 @@ textarea{resize:vertical;min-height:70px;}
 .lb img{max-width:92vw;max-height:88vh;border-radius:var(--r);object-fit:contain;}
 .lb-x{position:fixed;top:20px;right:24px;background:none;border:none;color:#fff;font-size:32px;cursor:pointer;line-height:1;}
 </style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -215,6 +216,12 @@ textarea{resize:vertical;min-height:70px;}
       </div>
       <div class="f"><label>CIC</label>
         <select id="e-cic"><option value="">Select</option><option>SMT</option><option>PSP</option><option>SMT&SMT</option><option>SMT&PSP</option><option>SSMT</option></select>
+      </div>
+      <div class="f"><label>News event</label>
+        <select id="e-news"><option value="">No news</option><option>FOMC</option><option>Core PCE</option><option>ISM Manufacturing</option><option>ISM Services</option><option>ADP Non Farm</option><option>NFP</option><option>CPI</option><option>Core PPI</option></select>
+      </div>
+      <div class="f"><label>News time</label>
+        <input type="time" id="e-newstime">
       </div>
       <div class="f"><label>Daily bias</label>
         <select id="e-bias"><option value="">Select</option><option>Reversal C2</option><option>Continuation C3</option><option>Continuation C4</option></select>
@@ -311,6 +318,7 @@ textarea{resize:vertical;min-height:70px;}
   <div class="sync-bar">
     <div class="dot syncing" id="sync-dot"></div>
     <span id="sync-status">Connecting to Google Sheets...</span>
+    <button class="btn-s" id="gd-btn" onclick="signInGDManual()" style="font-size:11px;padding:4px 10px;margin-left:8px;display:flex;align-items:center;gap:4px;"><i class="ti ti-brand-google-drive"></i> Connect Drive</button>
     <button class="sync-btn" onclick="loadSheets()" title="Refresh"><i class="ti ti-refresh"></i></button>
   </div>
 
@@ -352,6 +360,12 @@ textarea{resize:vertical;min-height:70px;}
         </div>
         <div class="f"><label>CIC</label>
           <select id="fcic"><option value="">Select CIC</option><option>SMT</option><option>PSP</option><option>SMT&SMT</option><option>SMT&PSP</option><option>SSMT</option></select>
+        </div>
+        <div class="f"><label>News event</label>
+          <select id="fnews"><option value="">No news</option><option>FOMC</option><option>Core PCE</option><option>ISM Manufacturing</option><option>ISM Services</option><option>ADP Non Farm</option><option>NFP</option><option>CPI</option><option>Core PPI</option></select>
+        </div>
+        <div class="f"><label>News time</label>
+          <input type="time" id="fnewstime" placeholder="News release time">
         </div>
       </div>
       <div class="sec-lbl">Daily bias</div>
@@ -447,7 +461,7 @@ textarea{resize:vertical;min-height:70px;}
     </div>
     <div style="overflow-x:auto;"><div style="min-width:1080px;">
       <div class="tt">
-        <div class="tr th"><span>Date</span><span>Account</span><span>Asset</span><span>Bias</span><span>Profile</span><span>CIC</span><span>TF</span><span>Entry</span><span>R plan</span><span>R real</span><span>Risk</span><span>P&L</span><span>Notes</span><span>Actions</span></div>
+        <div class="tr th"><span>Date</span><span>Account</span><span>Asset</span><span>Bias</span><span>Profile</span><span>CIC</span><span>News</span><span>TF</span><span>Entry</span><span>R plan</span><span>R real</span><span>Risk</span><span>P&L</span><span>Actions</span></div>
         <div id="trade-list"><div class="nt">Loading data...</div></div>
       </div>
     </div></div>
@@ -513,6 +527,105 @@ const now=new Date();
 cy=now.getFullYear();cm=now.getMonth();
 
 
+
+/* GOOGLE DRIVE */
+const GD_CLIENT_ID = "780885999672-q2pf465tqshrva0a9mmaiog7mnrhb7tb.apps.googleusercontent.com";
+const GD_FOLDER_ID = "1rEqJmJXJeLoSC-3U2qxPczg7QXYUBNp7";
+const GD_SCOPE = "https://www.googleapis.com/auth/drive.file";
+let gdToken = null;
+let gdTokenExpiry = 0;
+
+function isGDTokenValid() {
+  return gdToken && Date.now() < gdTokenExpiry;
+}
+
+function signInGD() {
+  return new Promise((resolve, reject) => {
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: GD_CLIENT_ID,
+      scope: GD_SCOPE,
+      callback: (resp) => {
+        if (resp.error) { reject(resp.error); return; }
+        gdToken = resp.access_token;
+        gdTokenExpiry = Date.now() + (resp.expires_in - 60) * 1000;
+        resolve(gdToken);
+      }
+    });
+    client.requestAccessToken();
+  });
+}
+
+async function ensureGDToken() {
+  if (!isGDTokenValid()) {
+    await signInGD();
+  }
+  return gdToken;
+}
+
+async function uploadToGDrive(base64Data, filename) {
+  try {
+    const token = await ensureGDToken();
+    // Convert base64 to blob
+    const arr = base64Data.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while(n--) u8arr[n] = bstr.charCodeAt(n);
+    const blob = new Blob([u8arr], {type: mime});
+
+    // Upload to Google Drive
+    const metadata = {
+      name: filename,
+      parents: [GD_FOLDER_ID]
+    };
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(metadata)], {type:'application/json'}));
+    form.append('file', blob);
+
+    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webContentLink,webViewLink', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body: form
+    });
+    const data = await res.json();
+    
+    // Make file publicly readable
+    await fetch(`https://www.googleapis.com/drive/v3/files/${data.id}/permissions`, {
+      method: 'POST',
+      headers: { 
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ role: 'reader', type: 'anyone' })
+    });
+
+    // Return direct image URL
+    return `https://drive.google.com/uc?export=view&id=${data.id}`;
+  } catch(e) {
+    console.error('GDrive upload error:', e);
+    return null;
+  }
+}
+
+async function uploadAllImgsToGDrive(imgs, tradeId) {
+  const urls = [];
+  for (let i = 0; i < imgs.length; i++) {
+    const img = imgs[i];
+    if (img.startsWith('http')) {
+      // already uploaded
+      urls.push(img);
+      continue;
+    }
+    const ext = img.split(';')[0].split('/')[1] || 'jpg';
+    const filename = `trade_${tradeId}_${i+1}.${ext}`;
+    setSS('syncing', `Uploading screenshot ${i+1}/${imgs.length} to Google Drive...`);
+    const url = await uploadToGDrive(img, filename);
+    urls.push(url || img); // fallback to base64 if upload fails
+  }
+  return urls;
+}
+
 function fixTime(t){
   if(!t) return '';
   const s=String(t);
@@ -545,7 +658,19 @@ async function loadSheets(){
     const r=await fetch(GS+'?t='+Date.now());
     const d=await r.json();
     if(d.trades){
-      trades=d.trades.map(t=>({...t,date:fixDate(t.date),time:fixTime(t.time),pnl:+t.pnl||0,profit:+t.profit||0,risk:+t.risk||0,rrPlan:+t.rrPlan||0,rr:+t.rr||0,imgs:[]}));
+      // get local trades to preserve screenshots
+      const localTrades=JSON.parse(localStorage.getItem('ftj')||'[]');
+      const localMap={};
+      localTrades.forEach(t=>{ if(t.imgs&&t.imgs.length) localMap[String(t.id)]=t.imgs; });
+      trades=d.trades.map(t=>({
+        ...t,
+        date:fixDate(t.date),
+        time:fixTime(t.time),
+        pnl:+t.pnl||0,profit:+t.profit||0,risk:+t.risk||0,
+        rrPlan:+t.rrPlan||0,rr:+t.rr||0,
+        // merge screenshots from localStorage
+        imgs: localMap[String(t.id)] || []
+      }));
       trades.sort((a,b)=>b.id-a.id);
       localStorage.setItem('ftj',JSON.stringify(trades));
       updateH();setSS('synced','Synced · '+trades.length+' trades');
@@ -603,7 +728,7 @@ async function saveTrade(){
   if(!date||!session||!asset){alert('Please fill in at least date, session, and asset!');return;}
   const btn=g('btn-save');btn.disabled=true;
   showAlrt('ld','<i class="ti ti-loader"></i> Saving...');
-  const trade={id:Date.now(),date:fixDate(date),time:g('ft').value,account:g('fac').value,session,asset,dir:g('fdir').value,profile:g('fpr').value,bias:bval,cic:g('fcic').value,entryModel:g('fem').value,tf:g('ftf').value,rrPlan:+g('frrp').value||0,rr:+g('frr').value||0,risk:+g('frisk').value||0,profit:+g('fprofit').value||0,pnl:+g('fpnl').value||0,result:g('fres').value,emotion:emo,psych:g('fpsych').value,notes:g('fnotes').value,imgs:[...imgs]};
+  const trade={id:Date.now(),date:fixDate(date),time:g('ft').value,account:g('fac').value,session,asset,dir:g('fdir').value,profile:g('fpr').value,bias:bval,cic:g('fcic').value,news:g('fnews').value,newsTime:g('fnewstime').value,entryModel:g('fem').value,tf:g('ftf').value,rrPlan:+g('frrp').value||0,rr:+g('frr').value||0,risk:+g('frisk').value||0,profit:+g('fprofit').value||0,pnl:+g('fpnl').value||0,result:g('fres').value,emotion:emo,psych:g('fpsych').value,notes:g('fnotes').value,imgs:[...imgs]};
   trades.unshift(trade);localStorage.setItem('ftj',JSON.stringify(trades));updateH();
   try{
     const r=await fetch(GS,{method:'POST',body:JSON.stringify({action:'save',trade})});
@@ -615,7 +740,7 @@ async function saveTrade(){
 }
 
 function clearForm(){
-  ['fd','fs','ft','fac','fas','fdir','fpr','fcic','fem','ftf','frrp','frr','frisk','fprofit','fpnl','fres','fpsych','fnotes'].forEach(id=>{const e=g(id);if(e)e.value='';});
+  ['fd','fs','ft','fac','fas','fdir','fpr','fcic','fnews','fnewstime','fem','ftf','frrp','frr','frisk','fprofit','fpnl','fres','fpsych','fnotes'].forEach(id=>{const e=g(id);if(e)e.value='';});
   g('fd').valueAsDate=new Date();
   document.querySelectorAll('.emo-btn').forEach(e=>e.classList.remove('on'));
   document.querySelectorAll('.bias-btn').forEach(b=>b.classList.remove('sr','sc'));
@@ -640,6 +765,7 @@ function openReview(id){
     ${bDir(t.dir)}
     ${t.result?`<span class="badge ${rb}">${t.result}</span>`:''}
     ${t.pnl?`<span class="${pc}" style="font-size:14px;font-weight:500;">${ps(t.pnl)}</span>`:''}
+    ${t.news?`<span class="badge" style="background:#FEF3C7;color:#92400E;">${t.news}${t.newsTime?' · '+t.newsTime:''}</span>`:''}
     ${t.time?`<span style="font-size:12px;color:var(--muted);">${t.time}</span>`:''}
   `;
 
@@ -653,6 +779,7 @@ function openReview(id){
     <div class="ef"><div class="ef-l">R:R achieved</div><div class="ef-v">${t.rr?t.rr+'R':'—'}</div></div>
     <div class="ef"><div class="ef-l">Risk</div><div class="ef-v">${t.risk?'$'+(+t.risk).toFixed(0):'—'}</div></div>
     <div class="ef"><div class="ef-l">Profit</div><div class="ef-v">${t.profit?ps(t.profit):'—'}</div></div>
+    ${t.news?`<div class="ef"><div class="ef-l">News</div><div class="ef-v">${t.news}${t.newsTime?' · '+t.newsTime:''}</div></div>`:''}
   `;
 
   // screenshots
@@ -704,8 +831,8 @@ function openEdit(id){
   const t=trades.find(t=>t.id==id);if(!t)return;
   editId=id;
   ['date','session','time','account','asset','dir','profile','cic','bias','em','tf','result','rrp','rr','risk','profit','pnl','psych','notes'].forEach(k=>{
-    const field={'date':'e-date','session':'e-session','time':'e-time','account':'e-account','asset':'e-asset','dir':'e-dir','profile':'e-profile','cic':'e-cic','bias':'e-bias','em':'e-em','tf':'e-tf','result':'e-result','rrp':'e-rrp','rr':'e-rr','risk':'e-risk','profit':'e-profit','pnl':'e-pnl','psych':'e-psych','notes':'e-notes'}[k];
-    const src={'date':t.date,'session':t.session,'time':t.time,'account':t.account,'asset':t.asset,'dir':t.dir,'profile':t.profile,'cic':t.cic,'bias':t.bias,'em':t.entryModel,'tf':t.tf,'result':t.result,'rrp':t.rrPlan,'rr':t.rr,'risk':t.risk,'profit':t.profit,'pnl':t.pnl,'psych':t.psych,'notes':t.notes}[k];
+    const field={'date':'e-date','session':'e-session','time':'e-time','account':'e-account','asset':'e-asset','dir':'e-dir','profile':'e-profile','cic':'e-cic','news':'e-news','newsTime':'e-newstime','bias':'e-bias','em':'e-em','tf':'e-tf','result':'e-result','rrp':'e-rrp','rr':'e-rr','risk':'e-risk','profit':'e-profit','pnl':'e-pnl','psych':'e-psych','notes':'e-notes'}[k];
+    const src={'date':t.date,'session':t.session,'time':t.time,'account':t.account,'asset':t.asset,'dir':t.dir,'profile':t.profile,'cic':t.cic,'news':t.news,'newsTime':t.newsTime,'bias':t.bias,'em':t.entryModel,'tf':t.tf,'result':t.result,'rrp':t.rrPlan,'rr':t.rr,'risk':t.risk,'profit':t.profit,'pnl':t.pnl,'psych':t.psych,'notes':t.notes}[k];
     const el=g(field);if(el)el.value=src||'';
   });
   g('edit-modal').classList.add('open');
@@ -719,7 +846,7 @@ async function saveEdit(){
   const t=trades[idx];
   t.date=fixDate(g('e-date').value);t.session=g('e-session').value;t.time=g('e-time').value;
   t.account=g('e-account').value;t.asset=g('e-asset').value;t.dir=g('e-dir').value;
-  t.profile=g('e-profile').value;t.cic=g('e-cic').value;t.bias=g('e-bias').value;
+  t.profile=g('e-profile').value;t.cic=g('e-cic').value;t.news=g('e-news').value;t.newsTime=g('e-newstime').value;t.bias=g('e-bias').value;
   t.entryModel=g('e-em').value;t.tf=g('e-tf').value;t.result=g('e-result').value;
   t.rrPlan=+g('e-rrp').value||0;t.rr=+g('e-rr').value||0;
   t.risk=+g('e-risk').value||0;t.profit=+g('e-profit').value||0;t.pnl=+g('e-pnl').value||0;
@@ -787,7 +914,8 @@ function openDd(ds){
     const iss=(t.imgs&&t.imgs.length)?`<div class="ec-ss">${t.imgs.map(s=>`<img src="${s}" onclick="openLb('${s}')">`).join('')}</div>`:'';
     return `<div class="ec">
       <div class="ec-top">
-        ${t.time?`<span style="font-size:12px;color:var(--muted);">${t.time}</span>`:''}
+        ${t.news?`<span class="badge" style="background:#FEF3C7;color:#92400E;">${t.news}${t.newsTime?' · '+t.newsTime:''}</span>`:''}
+    ${t.time?`<span style="font-size:12px;color:var(--muted);">${t.time}</span>`:''}
         ${t.account?`<span class="badge ${t.account==='Evaluation'?'bev':'bfu'}">${t.account}</span>`:''}
         <span style="font-size:13px;font-weight:500;">${t.asset||''}</span>
         ${bDir(t.dir)}
@@ -829,12 +957,12 @@ function renderLog(){
       <span>${fixDate(t.date)}</span><span>${bAcc(t.account)}</span><span>${t.asset||'—'}</span>
       <span>${bBias(t.bias)}</span><span style="font-size:10px;">${pr}</span>
       <span>${t.cic?`<span class="badge bci">${t.cic}</span>`:'—'}</span>
+      <span>${t.news?`<span class="badge" style="background:#FEF3C7;color:#92400E;font-size:9px;">${t.news}</span>`:'—'}</span>
       <span style="font-weight:500;">${t.tf||'—'}</span>
       <span>${t.entryModel?`<span class="badge bem">${t.entryModel}</span>`:'—'}</span>
       <span>${t.rrPlan?t.rrPlan+'R':'—'}</span><span>${t.rr?t.rr+'R':'—'}</span>
       <span style="color:var(--red);">${t.risk?'$'+(+t.risk).toFixed(0):'—'}</span>
       <span class="${pc}">${ps(t.pnl)}</span>
-      <span style="color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.notes||''}</span>
       <div class="tr-actions">
         <button class="rb" onclick="openReview(${t.id})" title="Review"><i class="ti ti-eye"></i></button>
         <button class="eb" onclick="openEdit(${t.id})" title="Edit"><i class="ti ti-edit"></i></button>
@@ -964,13 +1092,25 @@ function renderStats(){
 
 function exportCSV(){
   if(!trades.length){alert('No trades to export.');return;}
-  const h=['Date','Time','Account','Session','Asset','Direction','Daily Profile','Daily Bias','CIC','Entry Model','TF','RR Planned','RR Achieved','Risk($)','Profit($)','PnL($)','Result','Emotion','Psychology Notes','Trade Notes'];
-  const r=trades.map(t=>[fixDate(t.date),t.time,t.account,t.session,t.asset,t.dir,t.profile,t.bias,t.cic,t.entryModel,t.tf,t.rrPlan,t.rr,t.risk,t.profit,t.pnl,t.result,t.emotion,(t.psych||'').replace(/,/g,' '),(t.notes||'').replace(/,/g,' ')]);
+  const h=['Date','Time','Account','Session','Asset','Direction','Daily Profile','Daily Bias','CIC','News','News Time','Entry Model','TF','RR Planned','RR Achieved','Risk($)','Profit($)','PnL($)','Result','Emotion','Psychology Notes','Trade Notes'];
+  const r=trades.map(t=>[fixDate(t.date),t.time,t.account,t.session,t.asset,t.dir,t.profile,t.bias,t.cic,t.news||'',t.newsTime||'',t.entryModel,t.tf,t.rrPlan,t.rr,t.risk,t.profit,t.pnl,t.result,t.emotion,(t.psych||'').replace(/,/g,' '),(t.notes||'').replace(/,/g,' ')]);
   const csv=[h,...r].map(x=>x.join(',')).join('\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download='trading_journal_'+new Date().toISOString().slice(0,10)+'.csv';
   a.click();
+}
+
+
+function signInGDManual() {
+  signInGD().then(() => {
+    g('gd-btn').innerHTML = '<i class="ti ti-brand-google-drive"></i> Drive connected';
+    g('gd-btn').style.color = 'var(--green)';
+    g('gd-btn').style.borderColor = 'var(--green)';
+    g('gd-btn').onclick = null;
+  }).catch(e => {
+    alert('Failed to connect Google Drive: ' + e);
+  });
 }
 
 loadSheets();
