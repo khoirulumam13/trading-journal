@@ -837,26 +837,37 @@ async function loadSheets(){
   setSS('syncing','Connecting to Google Sheets...');
   try{
     const r=await fetch(GS+'?t='+Date.now());
-    const d=await r.json();
+    const text=await r.text();
+    let d;
+    try{ d=JSON.parse(text); } catch(e){ throw new Error('Invalid JSON: '+text.slice(0,100)); }
     if(d.trades){
-      // get local trades to preserve screenshots
       const localTrades=JSON.parse(localStorage.getItem('ftj')||'[]');
       const localMap={};
       localTrades.forEach(t=>{ if(t.imgs&&t.imgs.length) localMap[String(t.id)]=t.imgs; });
-      trades=d.trades.map(t=>({
+      // deduplicate by id
+      const seen=new Set();
+      const unique=d.trades.filter(t=>{ if(seen.has(String(t.id)))return false; seen.add(String(t.id)); return true; });
+      trades=unique.map(t=>({
         ...t,
         date:fixDate(t.date),
         time:fixTime(t.time),
+        newsTime:fixTime(t.newsTime),
         pnl:+t.pnl||0,profit:+t.profit||0,risk:+t.risk||0,
         rrPlan:+t.rrPlan||0,rr:+t.rr||0,
-        // merge screenshots from localStorage
         imgs: localMap[String(t.id)] || []
       }));
       trades.sort((a,b)=>b.id-a.id);
       localStorage.setItem('ftj',JSON.stringify(trades));
       updateH();setSS('synced','Synced · '+trades.length+' trades');
+    } else {
+      throw new Error(d.error||'No trades in response');
     }
-  }catch(e){setSS('error','Connection failed — using local data');}
+  }catch(e){
+    console.error('loadSheets error:',e);
+    setSS('error','Connection failed — using local data');
+    const loc=localStorage.getItem('ftj');
+    if(loc){ trades=JSON.parse(loc).map(t=>({...t,date:fixDate(t.date),time:fixTime(t.time)})); updateH(); }
+  }
 }
 
 function renderSS(){
