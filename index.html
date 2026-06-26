@@ -1081,7 +1081,10 @@ function renderCal(){
     const dt=bd[ds]||[],has=dt.length>0;
     const tp=dt.reduce((a,t)=>a+(+t.pnl||0),0);
     const w=dt.filter(t=>t.result==='Win').length,l=dt.filter(t=>t.result==='Loss').length,be=dt.filter(t=>t.result==='Break even').length;
-    let cls='cc'+(ds===ts?' today':'')+(has?' ht':'');
+    const dayNotes=dailyNotes.filter(n=>n.date===ds);
+    const hasNote=dayNotes.length>0;
+    const hasAny=has||hasNote;
+    let cls='cc'+(ds===ts?' today':'')+(hasAny?' ht':'');
     let inner=`<div class="cdate">${d}</div>`;
     if(has){
       inner+=`<div class="cpnl ${tp>=0?'pos':'neg'}">${ps(tp)}</div><div class="cpills">`;
@@ -1090,17 +1093,30 @@ function renderCal(){
       for(let i=0;i<be;i++)inner+=`<span class="cp cpb">BE</span>`;
       inner+=`</div>`;
     }
-    h+=`<div class="${cls}" ${has?`onclick="openDd('${ds}')"`:''}>${inner}</div>`;
+    if(hasNote){
+      inner+=`<div style="margin-top:3px;display:flex;gap:3px;flex-wrap:wrap;">`;
+      dayNotes.forEach(n=>{
+        const icon=n.type==='Outlook'?'📋':n.type==='Review'?'📝':'💡';
+        inner+=`<span style="font-size:9px;background:#EEF2FF;color:#4338CA;padding:1px 4px;border-radius:3px;font-weight:500;">${icon} ${n.type||'Note'}</span>`;
+      });
+      inner+=`</div>`;
+    }
+    h+=`<div class="${cls}" ${hasAny?`onclick="openDd('${ds}')"`:''}>${inner}</div>`;
   }
   g('cal-grid').innerHTML=h;
 }
 function openDd(ds){
-  const dt=trades.filter(t=>fixDate(t.date)===ds);if(!dt.length)return;
+  const dt=trades.filter(t=>fixDate(t.date)===ds);
+  const dayNotes=dailyNotes.filter(n=>n.date===ds);
+  if(!dt.length&&!dayNotes.length)return;
   const [y,m,d]=ds.split('-');
   g('dd-title').textContent=new Date(+y,+m-1,+d).toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const tp=dt.reduce((a,t)=>a+(+t.pnl||0),0);
   const w=dt.filter(t=>t.result==='Win').length,l=dt.filter(t=>t.result==='Loss').length;
-  g('dd-chips').innerHTML=`<div class="chip">${dt.length} trade${dt.length>1?'s':''}</div><div class="chip" style="color:${tp>=0?'var(--green)':'var(--red)'};font-weight:500;">P&L: ${ps(tp)}</div><div class="chip" style="color:var(--green);">${w}W</div><div class="chip" style="color:var(--red);">${l}L</div>`;
+  let chipsHtml=``;
+  if(dt.length) chipsHtml+=`<div class="chip">${dt.length} trade${dt.length>1?'s':''}</div><div class="chip" style="color:${tp>=0?'var(--green)':'var(--red)'};font-weight:500;">P&L: ${ps(tp)}</div><div class="chip" style="color:var(--green);">${w}W</div><div class="chip" style="color:var(--red);">${l}L</div>`;
+  if(dayNotes.length) chipsHtml+=`<div class="chip" style="background:#EEF2FF;color:#4338CA;">${dayNotes.length} note${dayNotes.length>1?'s':''}</div>`;
+  g('dd-chips').innerHTML=chipsHtml;
   g('dd-entries').innerHTML=dt.map(t=>{
     const rb=t.result==='Win'?'bw':t.result==='Loss'?'bl':t.result==='Break even'?'bbe':'bbe';
     const pc=(+t.pnl||0)>0?'pp':(+t.pnl||0)<0?'pn':'';
@@ -1130,6 +1146,29 @@ function openDd(ds){
       ${iss}
     </div>`;
   }).join('');
+  // Render daily notes in calendar detail
+  let notesHtml='';
+  if(dayNotes.length){
+    notesHtml+=`<div style="margin-top:${dt.length?'1rem':'0'};border-top:${dt.length?'0.5px solid var(--border)':'none'};padding-top:${dt.length?'1rem':'0'};">`;
+    notesHtml+=`<div style="font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.75rem;">Daily notes</div>`;
+    dayNotes.forEach(n=>{
+      const typeClass=n.type==='Outlook'?'dn-outlook':n.type==='Review'?'dn-review':'dn-note';
+      const biasClass=n.bias==='Bullish'?'dn-bias-bull':n.bias==='Bearish'?'dn-bias-bear':n.bias?'dn-bias-neu':'';
+      const biasLabel=n.bias==='Bullish'?'📈 Bullish':n.bias==='Bearish'?'📉 Bearish':n.bias?'➡️ Neutral':'';
+      notesHtml+=`<div class="ec" style="cursor:pointer;" onclick="closeDd();openDNEditor(${n.id})">
+        <div class="dn-card-top" style="margin-bottom:8px;">
+          <span class="dn-type-badge ${typeClass}">${n.type||'Note'}</span>
+          ${biasLabel?`<span class="${biasClass}">${biasLabel}</span>`:''}
+          <span style="margin-left:auto;font-size:11px;color:var(--hint);">click to edit</span>
+        </div>
+        <div class="dn-content">${(n.content||'').slice(0,300)}${(n.content||'').length>300?'...':''}</div>
+        ${n.levels?`<div class="dn-levels">📌 ${n.levels}</div>`:''}
+      </div>`;
+    });
+    notesHtml+=`</div>`;
+  }
+  g('dd-entries').innerHTML += notesHtml;
+  
   g('dd').classList.add('open');
   g('dd').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
