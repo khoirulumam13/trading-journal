@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Futures Trading Journal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<style>
+:root{
+  --bg:#f7f6f3;--surface:#fff;--border:#e8e6e0;--border-s:#d0cdc5;
+  --text:#1a1916;--muted:#7a7770;--hint:#b0ada6;
+  --green:#1d9e75;--gbg:#e1f5ee;--gt:#0f6e56;
+  --red:#d85a30;--rbg:#faece7;--rt:#993c1d;
+  --blue:#185fa5;--bbg:#e6f1fb;--bt:#0c447c;
+  --abg:#faeeda;--at:#633806;
+  --pbg:#fbeaf0;--pt:#993556;
+  --ubg:#eeedfe;--ut:#3c3489;
+  --r:8px;--rl:12px;--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh;}
+.wrap{max-width:1140px;margin:0 auto;padding:2rem 1.5rem;}
+.hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:2rem;}
+.hdr-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px;}
+.hdr-val{font-size:24px;font-weight:500;}
+.sync-bar{display:flex;align-items:center;gap:10px;background:var(--surface);border:.5px solid var(--border);border-radius:var(--r);padding:10px 14px;margin-bottom:1.5rem;font-size:12px;color:var(--muted);}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.dot.synced{background:var(--green);}
+.dot.syncing{background:#ef9f27;animation:pulse 1s infinite;}
+.dot.error{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.sync-btn{margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:2px 6px;border-radius:var(--r);}
+.sync-btn:hover{background:var(--bg);color:var(--text);}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:1.5rem;}
+.tab{padding:9px 18px;font-size:13px;cursor:pointer;border:none;background:none;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;font-family:var(--font);}
+.tab.active{color:var(--text);border-bottom-color:var(--text);font-weight:500;}
+.tab:hover:not(.active){color:var(--text);}
+.section{display:none;}.section.active{display:block;}
+.card{background:var(--surface);border:.5px solid var(--border);border-radius:var(--rl);padding:1.25rem;margin-bottom:1rem;}
+.card-title{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:1rem;display:flex;align-items:center;gap:6px;}
+.fg{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.fg2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+.f{display:flex;flex-direction:column;gap:5px;}
+.f label{font-size:12px;color:var(--muted);font-weight:500;}
+input,select,textarea{width:100%;font-size:13px;font-family:var(--font);padding:8px 10px;border:.5px solid var(--border);border-radius:var(--r);background:var(--surface);color:var(--text);outline:none;transition:border-color .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--border-s);}
+textarea{resize:vertical;min-height:70px;}
+.sec-lbl{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:14px 0 8px;}
+.bias-row{display:flex;gap:8px;}
+.bias-btn{flex:1;padding:9px 6px;text-align:center;border:.5px solid var(--border);border-radius:var(--r);cursor:pointer;font-size:12px;background:var(--surface);color:var(--muted);font-family:var(--font);user-select:none;transition:all .15s;}
+.bias-btn:hover{border-color:var(--border-s);color:var(--text);}
+.bias-btn.sr{border-color:var(--pt);background:var(--pbg);color:var(--pt);font-weight:500;}
+.bias-btn.sc{border-color:var(--blue);background:var(--bbg);color:var(--bt);font-weight:500;}
+.emo-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.emo-btn{padding:10px 6px;text-align:center;border:.5px solid var(--border);border-radius:var(--r);cursor:pointer;background:var(--surface);user-select:none;transition:all .15s;}
+.emo-btn:hover,.emo-btn.on{border-color:var(--border-s);background:var(--bg);}
+.emo-icon{font-size:22px;line-height:1.3;}
+.emo-label{font-size:10px;color:var(--muted);margin-top:3px;}
+.ss-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px;}
+.ss-slot{position:relative;aspect-ratio:4/3;border-radius:var(--r);overflow:hidden;border:1.5px dashed var(--border-s);background:var(--bg);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--hint);font-size:24px;transition:all .15s;}
+.ss-slot:hover{border-color:var(--muted);color:var(--muted);}
+.ss-slot.filled{border-style:solid;border-color:var(--border);cursor:default;}
+.ss-slot img{width:100%;height:100%;object-fit:cover;display:block;}
+.ss-rm{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);border:none;color:#fff;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:2;}
+.ss-num{position:absolute;bottom:4px;left:5px;font-size:10px;color:rgba(255,255,255,.9);background:rgba(0,0,0,.4);padding:1px 5px;border-radius:3px;}
+.ss-count{font-size:11px;color:var(--muted);margin-top:6px;}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:1.25rem;}
+.btn-p{background:var(--text);color:#fff;border:none;padding:9px 22px;border-radius:var(--r);font-size:13px;cursor:pointer;font-weight:500;font-family:var(--font);display:flex;align-items:center;gap:6px;}
+.btn-p:hover{opacity:.85;}.btn-p:disabled{opacity:.45;cursor:not-allowed;}
+.btn-s{background:transparent;color:var(--text);border:.5px solid var(--border-s);padding:8px 16px;border-radius:var(--r);font-size:13px;cursor:pointer;font-family:var(--font);}
+.btn-s:hover{background:var(--bg);}
+.btn-e{background:transparent;color:var(--blue);border:.5px solid #85b7eb;padding:8px 14px;border-radius:var(--r);font-size:13px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:5px;}
+.btn-e:hover{background:var(--bbg);}
+.btn-warn{background:transparent;color:var(--red);border:.5px solid var(--red);padding:7px 14px;border-radius:var(--r);font-size:12px;cursor:pointer;font-family:var(--font);}
+.btn-warn:hover{background:var(--rbg);}
+.alert{padding:10px 14px;border-radius:var(--r);font-size:13px;margin-bottom:1rem;display:none;align-items:center;gap:8px;}
+.alert.show{display:flex;}
+.alert.ok{background:var(--gbg);color:var(--gt);}
+.alert.err{background:var(--rbg);color:var(--rt);}
+.alert.ld{background:var(--bg);color:var(--muted);border:.5px solid var(--border);}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:500;white-space:nowrap;}
+.bw{background:var(--gbg);color:var(--gt);}.bl{background:var(--rbg);color:var(--rt);}
+.bbe{background:var(--bg);color:var(--muted);border:.5px solid var(--border);}
+.blong{background:#eaf3de;color:#3b6d11;}.bshort{background:var(--rbg);color:var(--rt);}
+.bev{background:var(--abg);color:var(--at);}.bfu{background:var(--gbg);color:var(--gt);}.bbt{background:#F3E8FF;color:#6B21A8;}
+.brv{background:var(--pbg);color:var(--pt);}.bco{background:var(--bbg);color:var(--bt);}
+.bem{background:var(--ubg);color:var(--ut);}.bci{background:#f1efe8;color:#444441;}
+.pp{color:var(--green);font-weight:500;}.pn{color:var(--red);font-weight:500;}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem;}
+.sc{background:var(--surface);border:.5px solid var(--border);border-radius:var(--rl);padding:14px;}
+.sl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.sv{font-size:22px;font-weight:500;}.sv.g{color:var(--green);}.sv.r{color:var(--red);}
+.log-bar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;}
+.log-bar select{font-size:12px;padding:6px 10px;width:auto;}
+.tt{background:var(--surface);border:.5px solid var(--border);border-radius:var(--rl);overflow:hidden;}
+.tr{display:grid;grid-template-columns:90px 58px 70px 68px 82px 54px 70px 40px 60px 52px 52px 56px 66px 60px;gap:5px;align-items:center;padding:9px 12px;border-bottom:.5px solid var(--border);font-size:11px;}
+.tr:last-child{border-bottom:none;}
+.tr.th{font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;background:var(--bg);}
+.tr-actions{display:flex;gap:4px;}
+.db,.eb{background:none;border:none;cursor:pointer;font-size:14px;padding:3px 4px;border-radius:4px;}
+.db{color:var(--hint);}.db:hover{color:var(--red);}
+.eb{color:var(--hint);}.eb:hover{color:var(--blue);}
+.rb{background:none;border:none;cursor:pointer;font-size:14px;padding:3px 4px;border-radius:4px;color:var(--hint);}.rb:hover{color:var(--green);}
+.nt{text-align:center;padding:3rem;color:var(--muted);}
+.eq-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.eq-lbl{width:150px;font-size:11px;color:var(--muted);flex-shrink:0;}
+.eq-bg{flex:1;height:6px;background:var(--bg);border-radius:3px;overflow:hidden;border:.5px solid var(--border);}
+.eq-bar{height:100%;border-radius:3px;}
+.eq-val{width:76px;text-align:right;font-size:12px;font-weight:500;font-family:var(--mono);}
+
+/* ANALYTICS */
+.ana-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.25rem;align-items:center;}
+.ana-filters select{font-size:12px;padding:7px 10px;width:auto;border-radius:var(--r);border:.5px solid var(--border-s);}
+.ana-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem;}
+.ana-card{background:var(--surface);border:.5px solid var(--border);border-radius:var(--rl);padding:1.1rem;}
+.ana-card-title{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.9rem;}
+.wr-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:.5px solid var(--border);}
+.wr-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.wr-key{flex:1;font-size:12px;font-weight:500;color:var(--text);}
+.wr-bar-wrap{width:100px;display:flex;align-items:center;gap:6px;}
+.wr-bar-bg{flex:1;height:5px;background:var(--bg);border-radius:3px;overflow:hidden;border:.5px solid var(--border);}
+.wr-bar-fill{height:100%;border-radius:3px;transition:width .4s;}
+.wr-pct{font-size:11px;font-weight:500;font-family:var(--mono);min-width:34px;text-align:right;}
+.wr-trades{font-size:10px;color:var(--muted);}
+.ana-empty{color:var(--muted);font-size:13px;padding:1rem 0;}
+.ana-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem;}
+
+/* CALENDAR */
+.cal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
+.cal-title{font-size:20px;font-weight:500;}
+.cal-nav-btn{background:var(--surface);border:.5px solid var(--border);border-radius:var(--r);padding:6px 12px;cursor:pointer;font-size:16px;color:var(--muted);}
+.cal-nav-btn:hover{color:var(--text);}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);border:.5px solid var(--border);border-radius:var(--rl);overflow:hidden;background:var(--surface);}
+.cdn{text-align:center;font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:8px 0;background:var(--bg);border-bottom:.5px solid var(--border);}
+.cc{min-height:90px;border-right:.5px solid var(--border);border-bottom:.5px solid var(--border);padding:6px;cursor:default;}
+.cc:nth-child(7n){border-right:none;}
+.cc.empty{background:var(--bg);opacity:.6;}
+.cc.ht{cursor:pointer;}.cc.ht:hover{background:var(--bg);}
+.cc.today .cdate{background:var(--text);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+.cdate{font-size:12px;font-weight:500;color:var(--muted);margin-bottom:4px;display:inline-block;}
+.cpnl{font-size:11px;font-weight:500;margin-bottom:3px;}
+.cpnl.pos{color:var(--green);}.cpnl.neg{color:var(--red);}
+.cpills{display:flex;flex-wrap:wrap;gap:2px;}
+.cp{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:500;}
+.cpw{background:var(--gbg);color:var(--gt);}.cpl{background:var(--rbg);color:var(--rt);}.cpb{background:var(--bg);color:var(--muted);}
+.dd{display:none;border:.5px solid var(--border);border-radius:var(--rl);background:var(--surface);margin-top:1rem;padding:1.25rem;}
+.dd.open{display:block;}
+.dd-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:.75rem;border-bottom:.5px solid var(--border);}
+.dd-title{font-size:16px;font-weight:500;}
+.close-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:20px;line-height:1;}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;}
+.chip{padding:5px 12px;border-radius:var(--r);font-size:12px;font-weight:500;background:var(--bg);color:var(--muted);border:.5px solid var(--border);}
+.ec{border:.5px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:8px;}
+.ec-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.ec-fields{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.ef{display:flex;flex-direction:column;gap:2px;}
+.ef-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.ef-v{font-size:12px;font-weight:500;}
+.ec-notes{font-size:11px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:.5px solid var(--border);line-height:1.5;}
+.ec-ss{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:.5px solid var(--border);}
+.ec-ss img{width:80px;height:60px;object-fit:cover;border-radius:4px;border:.5px solid var(--border);cursor:pointer;}
+
+/* EDIT MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border-radius:var(--rl);padding:1.5rem;width:90%;max-width:680px;max-height:88vh;overflow-y:auto;border:.5px solid var(--border);}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:.5px solid var(--border);}
+.modal-title{font-size:16px;font-weight:500;}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:1.25rem;padding-top:1rem;border-top:.5px solid var(--border);}
+
+
+.dn-card{background:var(--surface);border:.5px solid var(--border);border-radius:var(--rl);padding:1.1rem;margin-bottom:10px;cursor:pointer;transition:all .15s;}
+.dn-card:hover{border-color:var(--border-s);background:var(--bg);}
+.dn-card-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.dn-date{font-size:13px;font-weight:500;}
+.dn-type-badge{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;}
+.dn-outlook{background:#EEF2FF;color:#4338CA;}
+.dn-review{background:#F0FDF4;color:#166534;}
+.dn-note{background:#FFFBEB;color:#92400E;}
+.dn-bias-bull{background:var(--gbg);color:var(--gt);font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;}
+.dn-bias-bear{background:var(--rbg);color:var(--rt);font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;}
+.dn-bias-neu{background:var(--bg);color:var(--muted);font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;border:.5px solid var(--border);}
+.dn-content{font-size:12px;color:var(--muted);line-height:1.6;white-space:pre-wrap;}
+.dn-levels{font-size:11px;color:var(--hint);margin-top:6px;padding-top:6px;border-top:.5px solid var(--border);}
+
+.lb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;align-items:center;justify-content:center;}
+.lb.open{display:flex;}
+.lb img{max-width:92vw;max-height:88vh;border-radius:var(--r);object-fit:contain;}
+.lb-x{position:fixed;top:20px;right:24px;background:none;border:none;color:#fff;font-size:32px;cursor:pointer;line-height:1;}
+</style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+
+<div class="lb" id="lb" onclick="closeLb()">
+  <button class="lb-x" onclick="closeLb()">&#x2715;</button>
+  <img id="lb-img" src="" alt="Screenshot">
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">Edit trade</div>
+      <button class="close-btn" onclick="closeEdit()">&#x2715;</button>
+    </div>
+    <div class="fg" style="margin-bottom:12px;">
+      <div class="f"><label>Date</label><input type="date" id="e-date"></div>
+      <div class="f"><label>Session</label>
+        <select id="e-session"><option value="">Select</option><option>Asia</option><option>London</option><option>New York AM</option><option>New York PM</option></select>
+      </div>
+      <div class="f"><label>Entry time</label><input type="time" id="e-time"></div>
+      <div class="f"><label>Account</label>
+        <select id="e-account"><option value="">Select</option><option>Evaluation</option><option>Funded</option><option>Backtest</option></select>
+      </div>
+      <div class="f"><label>Asset</label>
+        <select id="e-asset"><option value="">Select</option>
+          <optgroup label="Indices"><option>ES (S&P 500)</option><option>NQ (Nasdaq)</option><option>YM (Dow)</option><option>RTY (Russell)</option></optgroup>
+          <optgroup label="Metal"><option>GC (Gold)</option><option>SI (Silver)</option></optgroup>
+          <optgroup label="Energy"><option>CL (Crude Oil)</option><option>HO (Heating Oil)</option><option>RB (RBOB Gasoline)</option></optgroup>
+          <optgroup label="Currency"><option>6E (Euro FX)</option><option>6B (British Pound)</option></optgroup>
+        </select>
+      </div>
+      <div class="f"><label>Direction</label>
+        <select id="e-dir"><option value="">Select</option><option>Long</option><option>Short</option></select>
+      </div>
+      <div class="f"><label>Daily profile</label>
+        <select id="e-profile"><option value="">Select</option><option>Asia reversal</option><option>London reversal</option><option>New York reversal</option><option>London continuation</option><option>New York continuation</option></select>
+      </div>
+      <div class="f"><label>CIC</label>
+        <select id="e-cic"><option value="">Select</option><option>SMT</option><option>PSP</option><option>SMT&SMT</option><option>SMT&PSP</option><option>SSMT</option></select>
+      </div>
+      <div class="f"><label>News event</label>
+        <select id="e-news"><option value="">No news</option><option>FOMC</option><option>Core PCE</option><option>ISM Manufacturing</option><option>ISM Services</option><option>ADP Non Farm</option><option>NFP</option><option>CPI</option><option>Core PPI</option></select>
+      </div>
+      <div class="f"><label>News time</label>
+        <input type="time" id="e-newstime">
+      </div>
+      <div class="f"><label>Daily bias</label>
+        <select id="e-bias"><option value="">Select</option><option>Reversal C2</option><option>Continuation C3</option><option>Continuation C4</option></select>
+      </div>
+      <div class="f"><label>Entry model</label>
+        <select id="e-em"><option value="">Select</option><option>1st CISD</option><option>2nd CISD</option><option>FVG</option></select>
+      </div>
+      <div class="f"><label>Time frame</label>
+        <select id="e-tf"><option value="">Select</option><option>m1</option><option>m3</option><option>m5</option><option>m15</option><option>m30</option><option>h1</option></select>
+      </div>
+      <div class="f"><label>Result</label>
+        <select id="e-result"><option value="">Select</option><option>Win</option><option>Loss</option><option>Break even</option></select>
+      </div>
+      <div class="f"><label>R:R planned</label><input type="number" id="e-rrp" step="0.1"></div>
+      <div class="f"><label>R:R achieved</label><input type="number" id="e-rr" step="0.1"></div>
+      <div class="f"><label>Risk ($)</label><input type="number" id="e-risk" step="0.01"></div>
+      <div class="f"><label>Profit ($)</label><input type="number" id="e-profit" step="0.01"></div>
+      <div class="f"><label>P&L ($)</label><input type="number" id="e-pnl" step="0.01"></div>
+    </div>
+    <div class="f" style="margin-bottom:10px;"><label>Psychology notes</label><textarea id="e-psych"></textarea></div>
+    <div class="f"><label>Trade notes</label><textarea id="e-notes"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-warn" onclick="closeEdit()">Cancel</button>
+      <button class="btn-p" onclick="saveEdit()"><i class="ti ti-check"></i> Save changes</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- REVIEW MODAL -->
+<div class="modal-overlay" id="review-modal">
+  <div class="modal" style="max-width:780px;">
+    <div class="modal-hdr">
+      <div class="modal-title" id="rv-title">Trade Review</div>
+      <button class="close-btn" onclick="closeReview()">&#x2715;</button>
+    </div>
+
+    <!-- header chips -->
+    <div class="chips" id="rv-chips" style="margin-bottom:1rem;"></div>
+
+    <!-- two col: fields + screenshots -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1rem;">
+      <div>
+        <div class="ana-card-title" style="margin-bottom:.75rem;">Trade details</div>
+        <div class="ec-fields" id="rv-fields"></div>
+      </div>
+      <div>
+        <div class="ana-card-title" style="margin-bottom:.75rem;">Screenshots <span id="rv-ss-counter" style="font-weight:400;color:var(--muted);font-size:11px;"></span></div>
+        <!-- slideshow -->
+        <div id="rv-ss-wrap" style="position:relative;aspect-ratio:4/3;background:var(--bg);border-radius:var(--r);overflow:hidden;border:.5px solid var(--border);">
+          <img id="rv-ss-img" src="" alt="Screenshot" style="width:100%;height:100%;object-fit:contain;cursor:pointer;" onclick="openLb(document.getElementById('rv-ss-img').src)">
+          <div id="rv-ss-empty" style="display:none;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--hint);font-size:13px;flex-direction:column;gap:8px;">
+            <i class="ti ti-photo-off" style="font-size:32px;"></i>No screenshots
+          </div>
+          <button id="rv-prev" onclick="slideNav(-1)" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.45);border:none;color:#fff;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;"><i class="ti ti-chevron-left"></i></button>
+          <button id="rv-next" onclick="slideNav(1)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.45);border:none;color:#fff;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;"><i class="ti ti-chevron-right"></i></button>
+        </div>
+        <!-- dots -->
+        <div id="rv-dots" style="display:flex;gap:6px;justify-content:center;margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <!-- psychology & notes -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:.5rem;" id="rv-notes-wrap">
+      <div id="rv-psych-wrap" style="display:none;">
+        <div class="ana-card-title" style="margin-bottom:.5rem;">Psychology notes</div>
+        <div id="rv-psych" style="font-size:12px;color:var(--muted);line-height:1.6;background:var(--bg);padding:10px 12px;border-radius:var(--r);border:.5px solid var(--border);"></div>
+      </div>
+      <div id="rv-notes-box" style="display:none;">
+        <div class="ana-card-title" style="margin-bottom:.5rem;">Trade notes</div>
+        <div id="rv-notes" style="font-size:12px;color:var(--muted);line-height:1.6;background:var(--bg);padding:10px 12px;border-radius:var(--r);border:.5px solid var(--border);"></div>
+      </div>
+    </div>
+
+    <div class="modal-actions" style="border-top:.5px solid var(--border);padding-top:1rem;margin-top:.5rem;">
+      <button class="btn-s" onclick="closeReview()">Close</button>
+      <button class="btn-p" onclick="closeReview();openEdit(currentReviewId)"><i class="ti ti-edit"></i> Edit trade</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="hdr">
+    <div>
+      <div class="hdr-lbl">Futures trading journal</div>
+      <div class="hdr-val" id="today-date"></div>
+    </div>
+    <div style="text-align:right;">
+      <div class="hdr-lbl">Total trades</div>
+      <div class="hdr-val" id="hdr-total">0</div>
+    </div>
+  </div>
+
+  <div class="sync-bar">
+    <div class="dot syncing" id="sync-dot"></div>
+    <span id="sync-status">Connecting to Google Sheets...</span>
+    <button class="btn-s" id="gd-btn" onclick="signInGDManual()" style="font-size:11px;padding:4px 10px;margin-left:8px;display:flex;align-items:center;gap:4px;"><i class="ti ti-brand-google-drive"></i> Connect Drive</button>
+    <button class="sync-btn" onclick="loadSheets()" title="Refresh"><i class="ti ti-refresh"></i></button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="goTab('entry',this)"><i class="ti ti-plus"></i> New entry</button>
+    <button class="tab" onclick="goTab('calendar',this)"><i class="ti ti-calendar"></i> Calendar</button>
+    <button class="tab" onclick="goTab('log',this)"><i class="ti ti-list"></i> Trade log</button>
+    <button class="tab" onclick="goTab('analytics',this)"><i class="ti ti-chart-dots"></i> Analytics</button>
+    <button class="tab" onclick="goTab('daily',this)"><i class="ti ti-notebook"></i> Daily notes</button>
+    <button class="tab" onclick="goTab('stats',this)"><i class="ti ti-chart-bar"></i> Statistics</button>
+  </div>
+
+  <!-- ENTRY -->
+  <div id="tab-entry" class="section active">
+    <div id="alrt" class="alert"></div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-calendar"></i> Trade info</div>
+      <div class="fg">
+        <div class="f"><label>Date</label><input type="date" id="fd"></div>
+        <div class="f"><label>Session</label>
+          <select id="fs"><option value="">Select session</option><option>Asia</option><option>London</option><option>New York AM</option><option>New York PM</option></select>
+        </div>
+        <div class="f"><label>Entry time</label><input type="time" id="ft"></div>
+        <div class="f"><label>Account</label>
+          <select id="fac"><option value="">Select account</option><option>Evaluation</option><option>Funded</option><option>Backtest</option></select>
+        </div>
+        <div class="f"><label>Asset</label>
+          <select id="fas"><option value="">Select asset</option>
+            <optgroup label="Indices"><option>ES (S&P 500)</option><option>NQ (Nasdaq)</option><option>YM (Dow)</option><option>RTY (Russell)</option></optgroup>
+            <optgroup label="Metal"><option>GC (Gold)</option><option>SI (Silver)</option></optgroup>
+            <optgroup label="Energy"><option>CL (Crude Oil)</option><option>HO (Heating Oil)</option><option>RB (RBOB Gasoline)</option></optgroup>
+            <optgroup label="Currency"><option>6E (Euro FX)</option><option>6B (British Pound)</option></optgroup>
+          </select>
+        </div>
+        <div class="f"><label>Direction</label>
+          <select id="fdir"><option value="">Select direction</option><option>Long</option><option>Short</option></select>
+        </div>
+        <div class="f"><label>Daily profile</label>
+          <select id="fpr"><option value="">Select profile</option><option>Asia reversal</option><option>London reversal</option><option>New York reversal</option><option>London continuation</option><option>New York continuation</option></select>
+        </div>
+        <div class="f"><label>CIC</label>
+          <select id="fcic"><option value="">Select CIC</option><option>SMT</option><option>PSP</option><option>SMT&SMT</option><option>SMT&PSP</option><option>SSMT</option></select>
+        </div>
+        <div class="f"><label>News event</label>
+          <select id="fnews"><option value="">No news</option><option>FOMC</option><option>Core PCE</option><option>ISM Manufacturing</option><option>ISM Services</option><option>ADP Non Farm</option><option>NFP</option><option>CPI</option><option>Core PPI</option></select>
+        </div>
+        <div class="f"><label>News time</label>
+          <input type="time" id="fnewstime" placeholder="News release time">
+        </div>
+      </div>
+      <div class="sec-lbl">Daily bias</div>
+      <div class="bias-row">
+        <button type="button" class="bias-btn" data-val="Reversal C2" onclick="selBias(this,'r')">Reversal C2</button>
+        <button type="button" class="bias-btn" data-val="Continuation C3" onclick="selBias(this,'c')">Continuation C3</button>
+        <button type="button" class="bias-btn" data-val="Continuation C4" onclick="selBias(this,'c')">Continuation C4</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-crosshair"></i> Entry detail</div>
+      <div class="fg">
+        <div class="f"><label>Entry model</label>
+          <select id="fem"><option value="">Select entry</option><option>1st CISD</option><option>2nd CISD</option><option>FVG</option></select>
+        </div>
+        <div class="f"><label>Time frame</label>
+          <select id="ftf"><option value="">Select TF</option><option>m1</option><option>m3</option><option>m5</option><option>m15</option><option>m30</option><option>h1</option></select>
+        </div>
+        <div class="f"><label>R:R planned</label><input type="number" id="frrp" step="0.1" placeholder="e.g. 3.0"></div>
+        <div class="f"><label>R:R achieved</label><input type="number" id="frr" step="0.1" placeholder="e.g. 2.5"></div>
+        <div class="f"><label>Risk per trade ($)</label><input type="number" id="frisk" step="0.01" placeholder="manual input"></div>
+        <div class="f"><label>Profit ($)</label><input type="number" id="fprofit" step="0.01" placeholder="0.00"></div>
+        <div class="f"><label>P&L ($)</label><input type="number" id="fpnl" step="0.01" placeholder="0.00"></div>
+        <div class="f"><label>Result</label>
+          <select id="fres"><option value="">Select result</option><option>Win</option><option>Loss</option><option>Break even</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-brain"></i> Psychology & emotion</div>
+      <div class="sec-lbl" style="margin-top:0;">State before trade</div>
+      <div class="emo-row">
+        <div class="emo-btn" data-val="focused" onclick="selEmo(this)"><div class="emo-icon">🎯</div><div class="emo-label">Focused</div></div>
+        <div class="emo-btn" data-val="calm" onclick="selEmo(this)"><div class="emo-icon">😌</div><div class="emo-label">Calm</div></div>
+        <div class="emo-btn" data-val="anxious" onclick="selEmo(this)"><div class="emo-icon">😰</div><div class="emo-label">Anxious</div></div>
+        <div class="emo-btn" data-val="fomo" onclick="selEmo(this)"><div class="emo-icon">😤</div><div class="emo-label">FOMO</div></div>
+        <div class="emo-btn" data-val="revenge" onclick="selEmo(this)"><div class="emo-icon">🔥</div><div class="emo-label">Revenge</div></div>
+      </div>
+      <div style="margin-top:1rem;">
+        <div class="sec-lbl" style="margin-top:0;margin-bottom:6px;">Psychology notes</div>
+        <textarea id="fpsych" placeholder="How did you feel? Did you follow your plan?"></textarea>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-photo"></i> Chart screenshots (max 5)</div>
+      <div class="f" style="margin-bottom:12px;">
+        <div class="sec-lbl" style="margin-top:0;margin-bottom:6px;">Trade notes</div>
+        <textarea id="fnotes" placeholder="Analysis, entry reason, mistakes, lessons learned..."></textarea>
+      </div>
+      <div class="ss-grid" id="ss-grid"></div>
+      <div class="ss-count" id="ss-count">0 / 5 screenshots</div>
+      <input type="file" id="f-img" accept="image/*" multiple style="display:none;" onchange="handleImg(event)">
+    </div>
+    <div class="actions">
+      <button class="btn-s" onclick="clearForm()">Clear</button>
+      <button class="btn-p" id="btn-save" onclick="saveTrade()"><i class="ti ti-device-floppy"></i> Save trade</button>
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div id="tab-calendar" class="section">
+    <div class="cal-hdr">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="cal-nav-btn" onclick="chMonth(-1)"><i class="ti ti-chevron-left"></i></button>
+        <div class="cal-title" id="cal-title"></div>
+        <button class="cal-nav-btn" onclick="chMonth(1)"><i class="ti ti-chevron-right"></i></button>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;font-size:11px;color:var(--muted);">
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--green);display:inline-block;"></span>Win</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--red);display:inline-block;"></span>Loss</span>
+      </div>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="dd" id="dd">
+      <div class="dd-hdr">
+        <div class="dd-title" id="dd-title"></div>
+        <button class="close-btn" onclick="closeDd()">&#x2715;</button>
+      </div>
+      <div class="chips" id="dd-chips"></div>
+      <div id="dd-entries"></div>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div id="tab-log" class="section">
+    <div class="log-bar">
+      <select id="fl-s" onchange="renderLog()"><option value="">All sessions</option><option>Asia</option><option>London</option><option>New York AM</option><option>New York PM</option></select>
+      <select id="fl-a" onchange="renderLog()"><option value="">All accounts</option><option>Evaluation</option><option>Funded</option><option>Backtest</option></select>
+      <select id="fl-as" onchange="renderLog()"><option value="">All assets</option><option>ES (S&P 500)</option><option>NQ (Nasdaq)</option><option>YM (Dow)</option><option>RTY (Russell)</option><option>GC (Gold)</option><option>SI (Silver)</option><option>CL (Crude Oil)</option><option>HO (Heating Oil)</option><option>RB (RBOB Gasoline)</option><option>6E (Euro FX)</option><option>6B (British Pound)</option></select>
+      <select id="fl-r" onchange="renderLog()"><option value="">All results</option><option>Win</option><option>Loss</option><option>Break even</option></select>
+      <button class="btn-e" onclick="exportCSV()"><i class="ti ti-download"></i> Export CSV</button>
+      <span style="font-size:12px;color:var(--muted);margin-left:auto;" id="log-cnt"></span>
+    </div>
+    <div style="overflow-x:auto;"><div style="min-width:1080px;">
+      <div class="tt">
+        <div class="tr th"><span>Date</span><span>Account</span><span>Asset</span><span>Bias</span><span>Profile</span><span>CIC</span><span>News</span><span>TF</span><span>Entry</span><span>R plan</span><span>R real</span><span>Risk</span><span>P&L</span><span>Actions</span></div>
+        <div id="trade-list"><div class="nt">Loading data...</div></div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- ANALYTICS -->
+  <div id="tab-analytics" class="section">
+    <div class="ana-filters">
+      <select id="ana-asset" onchange="renderAnalytics()"><option value="">All assets</option><option>ES (S&P 500)</option><option>NQ (Nasdaq)</option><option>YM (Dow)</option><option>RTY (Russell)</option><option>GC (Gold)</option><option>SI (Silver)</option><option>CL (Crude Oil)</option><option>HO (Heating Oil)</option><option>RB (RBOB Gasoline)</option><option>6E (Euro FX)</option><option>6B (British Pound)</option></select>
+      <select id="ana-session" onchange="renderAnalytics()"><option value="">All sessions</option><option>Asia</option><option>London</option><option>New York AM</option><option>New York PM</option></select>
+      <select id="ana-account" onchange="renderAnalytics()"><option value="">All accounts</option><option>Evaluation</option><option>Funded</option><option>Backtest</option></select>
+      <span id="ana-info" style="font-size:12px;color:var(--muted);margin-left:auto;"></span>
+    </div>
+    <div class="ana-summary" id="ana-summary"></div>
+    <div class="ana-grid" id="ana-grid"></div>
+  </div>
+
+
+  <!-- DAILY NOTES -->
+  <div id="tab-daily" class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="cal-nav-btn" onclick="dnChangeMonth(-1)"><i class="ti ti-chevron-left"></i></button>
+        <div style="font-size:18px;font-weight:500;" id="dn-month-title"></div>
+        <button class="cal-nav-btn" onclick="dnChangeMonth(1)"><i class="ti ti-chevron-right"></i></button>
+      </div>
+      <button class="btn-p" onclick="openDNEditor(null)"><i class="ti ti-plus"></i> New note</button>
+    </div>
+    <div id="dn-list"><div class="nt">No daily notes yet. Click "New note" to add outlook or review.</div></div>
+  </div>
+
+  <!-- DAILY NOTE EDITOR MODAL -->
+  <div class="modal-overlay" id="dn-modal">
+    <div class="modal" style="max-width:600px;">
+      <div class="modal-hdr">
+        <div class="modal-title" id="dn-modal-title">New daily note</div>
+        <button class="close-btn" onclick="closeDNModal()">&#x2715;</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem;">
+        <div class="f"><label>Date</label><input type="date" id="dn-date"></div>
+        <div class="f"><label>Type</label>
+          <select id="dn-type">
+            <option value="Outlook">📋 Outlook</option>
+            <option value="Review">📝 Daily review</option>
+            <option value="Note">💡 Note</option>
+          </select>
+        </div>
+      </div>
+      <div class="f" style="margin-bottom:12px;">
+        <label>Market bias / outlook</label>
+        <div style="display:flex;gap:8px;margin-top:5px;">
+          <button type="button" class="bias-btn" data-val="Bullish" onclick="selDNBias(this,'bull')" id="dn-bull">📈 Bullish</button>
+          <button type="button" class="bias-btn" data-val="Bearish" onclick="selDNBias(this,'bear')" id="dn-bear">📉 Bearish</button>
+          <button type="button" class="bias-btn" data-val="Neutral" onclick="selDNBias(this,'neu')" id="dn-neu">➡️ Neutral</button>
+        </div>
+      </div>
+      <div class="f" style="margin-bottom:12px;">
+        <label>Note / Outlook / Review</label>
+        <textarea id="dn-content" style="min-height:150px;" placeholder="Write your market outlook, trade review, or any notes for today..."></textarea>
+      </div>
+      <div class="f" style="margin-bottom:12px;">
+        <label>Key levels / Watchlist</label>
+        <textarea id="dn-levels" style="min-height:80px;" placeholder="Key price levels, assets to watch, economic events..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-warn" id="dn-delete-btn" onclick="deleteDN()" style="display:none;">Delete</button>
+        <button class="btn-s" onclick="closeDNModal()">Cancel</button>
+        <button class="btn-p" onclick="saveDN()"><i class="ti ti-device-floppy"></i> Save note</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div id="tab-stats" class="section">
+    <div class="sg">
+      <div class="sc"><div class="sl">Total trades</div><div class="sv" id="s-tot">0</div></div>
+      <div class="sc"><div class="sl">Win rate</div><div class="sv g" id="s-wr">0%</div></div>
+      <div class="sc"><div class="sl">Total P&L</div><div class="sv" id="s-pnl">$0</div></div>
+      <div class="sc"><div class="sl">Total profit</div><div class="sv g" id="s-pr">$0</div></div>
+    </div>
+    <div class="sg">
+      <div class="sc"><div class="sl">Avg R:R planned</div><div class="sv" id="s-rrp">—</div></div>
+      <div class="sc"><div class="sl">Avg R:R achieved</div><div class="sv" id="s-rr">—</div></div>
+      <div class="sc"><div class="sl">Best trade</div><div class="sv g" id="s-best">$0</div></div>
+      <div class="sc"><div class="sl">Profit factor</div><div class="sv" id="s-pf">0</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:1rem;">
+      <div class="sc"><div class="sl">Evaluation P&L</div><div class="sv" id="s-ev">$0</div></div>
+      <div class="sc"><div class="sl">Funded P&L</div><div class="sv" id="s-fu">$0</div></div>
+      <div class="sc"><div class="sl">Backtest P&L</div><div class="sv" id="s-bt">$0</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Wins vs losses</div>
+      <div style="display:flex;gap:2rem;align-items:center;padding:.5rem 0;">
+        <div style="text-align:center;"><div style="font-size:28px;font-weight:500;color:var(--green);" id="s-wins">0</div><div style="font-size:11px;color:var(--muted);margin-top:4px;">Wins</div></div>
+        <div style="flex:1;height:12px;background:var(--bg);border-radius:6px;overflow:hidden;border:.5px solid var(--border);">
+          <div id="win-bar" style="height:100%;background:var(--green);width:0%;border-radius:6px;transition:width .5s;"></div>
+        </div>
+        <div style="text-align:center;"><div style="font-size:28px;font-weight:500;color:var(--red);" id="s-losses">0</div><div style="font-size:11px;color:var(--muted);margin-top:4px;">Losses</div></div>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">P&L by session</div><div id="b-ses"></div></div>
+    <div class="card"><div class="card-title">P&L by daily bias</div><div id="b-bias"></div></div>
+    <div class="card"><div class="card-title">P&L by CIC</div><div id="b-cic"></div></div>
+    <div class="card"><div class="card-title">P&L by entry model</div><div id="b-em"></div></div>
+    <div class="card"><div class="card-title">P&L by time frame</div><div id="b-tf"></div></div>
+    <div class="card"><div class="card-title">P&L by asset</div><div id="b-as"></div></div>
+  </div>
+</div>
+
+<script>
+const GS="https://script.google.com/macros/s/AKfycbycVLBIlx6FV_vxDWInv1IIJ3W36yvDsO6BV6q5uCd848nOmHoQKBlGCI7nHGpPp0CA/exec";
+const MAX=5;
+let trades=JSON.parse(localStorage.getItem('ftj')||'[]');
+let emo='',bval='',imgs=[];
+let editId=null;
+let cy,cm;
+const now=new Date();
+cy=now.getFullYear();cm=now.getMonth();
+
+
+
+
+/* DAILY NOTES */
+let dailyNotes = JSON.parse(localStorage.getItem('ftj_notes')||'[]');
+let dnYear, dnMonth, editingDNId=null, dnBias='';
+dnYear=now.getFullYear(); dnMonth=now.getMonth();
+
+function dnChangeMonth(d){
+  dnMonth+=d;
+  if(dnMonth>11){dnMonth=0;dnYear++;}
+  if(dnMonth<0){dnMonth=11;dnYear--;}
+  renderDNList();
+}
+
+function renderDNList(){
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  g('dn-month-title').textContent = months[dnMonth]+' '+dnYear;
+  const prefix = dnYear+'-'+String(dnMonth+1).padStart(2,'0');
+  const filtered = dailyNotes.filter(n=>n.date&&n.date.startsWith(prefix)).sort((a,b)=>b.date.localeCompare(a.date));
+  if(!filtered.length){
+    g('dn-list').innerHTML='<div class="nt">No notes for this month. Click "New note" to add.</div>';
+    return;
+  }
+  g('dn-list').innerHTML = filtered.map(n=>{
+    const typeClass = n.type==='Outlook'?'dn-outlook':n.type==='Review'?'dn-review':'dn-note';
+    const biasClass = n.bias==='Bullish'?'dn-bias-bull':n.bias==='Bearish'?'dn-bias-bear':n.bias?'dn-bias-neu':'';
+    const biasLabel = n.bias==='Bullish'?'📈 Bullish':n.bias==='Bearish'?'📉 Bearish':n.bias?'➡️ Neutral':'';
+    return `<div class="dn-card" onclick="openDNEditor(${n.id})">
+      <div class="dn-card-top">
+        <span class="dn-date">${n.date}</span>
+        <span class="dn-type-badge ${typeClass}">${n.type||'Note'}</span>
+        ${biasLabel?`<span class="${biasClass}">${biasLabel}</span>`:''}
+      </div>
+      <div class="dn-content">${(n.content||'').slice(0,200)}${(n.content||'').length>200?'...':''}</div>
+      ${n.levels?`<div class="dn-levels">📌 ${n.levels}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function openDNEditor(id){
+  editingDNId = id;
+  if(id){
+    const n = dailyNotes.find(n=>n.id==id);
+    if(!n)return;
+    g('dn-modal-title').textContent = 'Edit note';
+    g('dn-date').value = n.date||'';
+    g('dn-type').value = n.type||'Note';
+    g('dn-content').value = n.content||'';
+    g('dn-levels').value = n.levels||'';
+    dnBias = n.bias||'';
+    g('dn-delete-btn').style.display='block';
+    // set bias button
+    ['bull','bear','neu'].forEach(t=>document.getElementById('dn-'+t).classList.remove('sr','sc'));
+    if(n.bias==='Bullish') g('dn-bull').classList.add('sc');
+    else if(n.bias==='Bearish') g('dn-bear').classList.add('sr');
+    else if(n.bias==='Neutral') g('dn-neu').classList.add('sc');
+  } else {
+    g('dn-modal-title').textContent = 'New daily note';
+    g('dn-date').valueAsDate = new Date();
+    g('dn-type').value = 'Outlook';
+    g('dn-content').value = '';
+    g('dn-levels').value = '';
+    dnBias = '';
+    g('dn-delete-btn').style.display='none';
+    ['bull','bear','neu'].forEach(t=>document.getElementById('dn-'+t).classList.remove('sr','sc'));
+  }
+  g('dn-modal').classList.add('open');
+}
+
+function closeDNModal(){
+  g('dn-modal').classList.remove('open');
+  editingDNId=null; dnBias='';
+}
+
+function selDNBias(el, type){
+  ['bull','bear','neu'].forEach(t=>document.getElementById('dn-'+t).classList.remove('sr','sc'));
+  el.classList.add(type==='bear'?'sr':'sc');
+  dnBias = el.dataset.val;
+}
+
+function saveDN(){
+  const date = g('dn-date').value;
+  const content = g('dn-content').value;
+  if(!date){alert('Please fill in the date!');return;}
+  if(editingDNId){
+    const n = dailyNotes.find(n=>n.id==editingDNId);
+    if(n){
+      n.date=date; n.type=g('dn-type').value;
+      n.bias=dnBias; n.content=content; n.levels=g('dn-levels').value;
+    }
+  } else {
+    dailyNotes.unshift({
+      id:Date.now(), date, type:g('dn-type').value,
+      bias:dnBias, content, levels:g('dn-levels').value
+    });
+  }
+  localStorage.setItem('ftj_notes', JSON.stringify(dailyNotes));
+  closeDNModal();
+  renderDNList();
+}
+
+function deleteDN(){
+  if(!editingDNId)return;
+  if(!confirm('Delete this note?'))return;
+  dailyNotes = dailyNotes.filter(n=>n.id!=editingDNId);
+  localStorage.setItem('ftj_notes', JSON.stringify(dailyNotes));
+  closeDNModal();
+  renderDNList();
+}
+
+/* GOOGLE DRIVE */
+const GD_CLIENT_ID = "780885999672-q2pf465tqshrva0a9mmaiog7mnrhb7tb.apps.googleusercontent.com";
+const GD_FOLDER_ID = "1rEqJmJXJeLoSC-3U2qxPczg7QXYUBNp7";
+const GD_SCOPE = "https://www.googleapis.com/auth/drive.file";
+let gdToken = null;
+let gdTokenExpiry = 0;
+
+function isGDTokenValid() {
+  return gdToken && Date.now() < gdTokenExpiry;
+}
+
+function signInGD() {
+  return new Promise((resolve, reject) => {
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: GD_CLIENT_ID,
+      scope: GD_SCOPE,
+      callback: (resp) => {
+        if (resp.error) { reject(resp.error); return; }
+        gdToken = resp.access_token;
+        gdTokenExpiry = Date.now() + (resp.expires_in - 60) * 1000;
+        resolve(gdToken);
+      }
+    });
+    client.requestAccessToken();
+  });
+}
+
+async function ensureGDToken() {
+  if (!isGDTokenValid()) {
+    await signInGD();
+  }
+  return gdToken;
+}
+
+async function uploadToGDrive(base64Data, filename) {
+  try {
+    const token = await ensureGDToken();
+    // Convert base64 to blob
+    const arr = base64Data.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while(n--) u8arr[n] = bstr.charCodeAt(n);
+    const blob = new Blob([u8arr], {type: mime});
+
+    // Upload to Google Drive
+    const metadata = {
+      name: filename,
+      parents: [GD_FOLDER_ID]
+    };
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(metadata)], {type:'application/json'}));
+    form.append('file', blob);
+
+    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webContentLink,webViewLink', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      body: form
+    });
+    const data = await res.json();
+    
+    // Make file publicly readable
+    await fetch(`https://www.googleapis.com/drive/v3/files/${data.id}/permissions`, {
+      method: 'POST',
+      headers: { 
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ role: 'reader', type: 'anyone' })
+    });
+
+    // Return direct image URL
+    return `https://drive.google.com/uc?export=view&id=${data.id}`;
+  } catch(e) {
+    console.error('GDrive upload error:', e);
+    return null;
+  }
+}
+
+async function uploadAllImgsToGDrive(imgs, tradeId) {
+  const urls = [];
+  for (let i = 0; i < imgs.length; i++) {
+    const img = imgs[i];
+    if (img.startsWith('http')) {
+      // already uploaded
+      urls.push(img);
+      continue;
+    }
+    const ext = img.split(';')[0].split('/')[1] || 'jpg';
+    const filename = `trade_${tradeId}_${i+1}.${ext}`;
+    setSS('syncing', `Uploading screenshot ${i+1}/${imgs.length} to Google Drive...`);
+    const url = await uploadToGDrive(img, filename);
+    urls.push(url || img); // fallback to base64 if upload fails
+  }
+  return urls;
+}
+
+function fixTime(t){
+  if(!t) return '';
+  const s=String(t);
+  // handle "1899-12-31T03:00:00.000Z" format from Sheets
+  if(s.includes('T') && s.includes('1899')){
+    const match=s.match(/T(\d{2}:\d{2})/);
+    return match?match[1]:'';
+  }
+  // handle normal HH:MM or HH:MM:SS
+  if(s.match(/^\d{2}:\d{2}/)) return s.slice(0,5);
+  return s;
+}
+
+function fixDate(d){if(!d)return'';return String(d).slice(0,10);}
+function g(id){return document.getElementById(id);}
+function ps(v){v=+v||0;return v>0?'+$'+v.toFixed(2):v<0?'-$'+Math.abs(v).toFixed(2):'$0';}
+function bBias(b){if(!b)return'—';return b.startsWith('R')?`<span class="badge brv">${b}</span>`:`<span class="badge bco">${b}</span>`;}
+function bAcc(a){if(!a)return'—';if(a==='Evaluation')return'<span class="badge bev">Eval</span>';if(a==='Funded')return'<span class="badge bfu">Funded</span>';if(a==='Backtest')return'<span class="badge bbt">Backtest</span>';return a;}
+function bDir(d){if(!d)return'—';return d==='Long'?'<span class="badge blong">Long</span>':'<span class="badge bshort">Short</span>';}
+
+document.getElementById('today-date').textContent=now.toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+g('fd').valueAsDate=now;
+renderSS();updateH();
+
+function setSS(state,msg){g('sync-dot').className='dot '+state;g('sync-status').textContent=msg;}
+
+async function loadSheets(){
+  setSS('syncing','Connecting to Google Sheets...');
+  try{
+    const r=await fetch(GS+'?t='+Date.now());
+    const d=await r.json();
+    if(d.trades){
+      // get local trades to preserve screenshots
+      const localTrades=JSON.parse(localStorage.getItem('ftj')||'[]');
+      const localMap={};
+      localTrades.forEach(t=>{ if(t.imgs&&t.imgs.length) localMap[String(t.id)]=t.imgs; });
+      trades=d.trades.map(t=>({
+        ...t,
+        date:fixDate(t.date),
+        time:fixTime(t.time),
+        pnl:+t.pnl||0,profit:+t.profit||0,risk:+t.risk||0,
+        rrPlan:+t.rrPlan||0,rr:+t.rr||0,
+        // merge screenshots from localStorage
+        imgs: localMap[String(t.id)] || []
+      }));
+      trades.sort((a,b)=>b.id-a.id);
+      localStorage.setItem('ftj',JSON.stringify(trades));
+      updateH();setSS('synced','Synced · '+trades.length+' trades');
+    }
+  }catch(e){setSS('error','Connection failed — using local data');}
+}
+
+function renderSS(){
+  let h='';
+  for(let i=0;i<MAX;i++){
+    if(i<imgs.length){
+      h+=`<div class="ss-slot filled"><img src="${imgs[i]}" onclick="openLb('${imgs[i]}')"><button class="ss-rm" onclick="rmImg(${i})" type="button">✕</button><span class="ss-num">${i+1}</span></div>`;
+    }else{
+      const dis=imgs.length>=MAX;
+      h+=`<div class="ss-slot" ${dis?'style="opacity:.3;cursor:not-allowed;"':'onclick="trigUp()"'}><i class="ti ti-plus"></i></div>`;
+    }
+  }
+  g('ss-grid').innerHTML=h;
+  g('ss-count').textContent=imgs.length+' / '+MAX+' screenshots';
+}
+function trigUp(){if(imgs.length<MAX)g('f-img').click();}
+function handleImg(e){
+  const rem=MAX-imgs.length;
+  Array.from(e.target.files).slice(0,rem).forEach(f=>{
+    const r=new FileReader();
+    r.onload=ev=>{imgs.push(ev.target.result);renderSS();};
+    r.readAsDataURL(f);
+  });
+  e.target.value='';
+}
+function rmImg(i){imgs.splice(i,1);renderSS();}
+function openLb(src){g('lb-img').src=src;g('lb').classList.add('open');}
+function closeLb(){g('lb').classList.remove('open');}
+
+function goTab(name,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  g('tab-'+name).classList.add('active');el.classList.add('active');
+  if(name==='log')renderLog();
+  if(name==='stats')renderStats();
+  if(name==='calendar')renderCal();
+  if(name==='analytics')renderAnalytics();
+  if(name==='daily'){dnYear=now.getFullYear();dnMonth=now.getMonth();renderDNList();}
+}
+
+function selEmo(el){document.querySelectorAll('.emo-btn').forEach(e=>e.classList.remove('on'));el.classList.add('on');emo=el.dataset.val;}
+function selBias(el,type){document.querySelectorAll('.bias-btn').forEach(b=>b.classList.remove('sr','sc'));el.classList.add(type==='r'?'sr':'sc');bval=el.dataset.val;}
+
+function showAlrt(type,msg){
+  const a=g('alrt');a.className='alert show '+type;a.innerHTML=msg;
+  if(type!=='ld')setTimeout(()=>a.classList.remove('show'),3500);
+}
+
+async function saveTrade(){
+  const date=g('fd').value,session=g('fs').value,asset=g('fas').value;
+  if(!date||!session||!asset){alert('Please fill in at least date, session, and asset!');return;}
+  const btn=g('btn-save');btn.disabled=true;
+  showAlrt('ld','<i class="ti ti-loader"></i> Saving...');
+  const trade={id:Date.now(),date:fixDate(date),time:g('ft').value,account:g('fac').value,session,asset,dir:g('fdir').value,profile:g('fpr').value,bias:bval,cic:g('fcic').value,news:g('fnews').value,newsTime:g('fnewstime').value,entryModel:g('fem').value,tf:g('ftf').value,rrPlan:+g('frrp').value||0,rr:+g('frr').value||0,risk:+g('frisk').value||0,profit:+g('fprofit').value||0,pnl:+g('fpnl').value||0,result:g('fres').value,emotion:emo,psych:g('fpsych').value,notes:g('fnotes').value,imgs:[...imgs]};
+  trades.unshift(trade);localStorage.setItem('ftj',JSON.stringify(trades));updateH();
+  try{
+    const r=await fetch(GS,{method:'POST',body:JSON.stringify({action:'save',trade})});
+    const d=await r.json();
+    if(d.success){showAlrt('ok','<i class="ti ti-check"></i> Saved to Google Sheets!');setSS('synced','Synced · '+trades.length+' trades');}
+    else throw'';
+  }catch{showAlrt('err','<i class="ti ti-alert-circle"></i> Sheets sync failed — saved locally');}
+  clearForm();btn.disabled=false;
+}
+
+function clearForm(){
+  ['fd','fs','ft','fac','fas','fdir','fpr','fcic','fnews','fnewstime','fem','ftf','frrp','frr','frisk','fprofit','fpnl','fres','fpsych','fnotes'].forEach(id=>{const e=g(id);if(e)e.value='';});
+  g('fd').valueAsDate=new Date();
+  document.querySelectorAll('.emo-btn').forEach(e=>e.classList.remove('on'));
+  document.querySelectorAll('.bias-btn').forEach(b=>b.classList.remove('sr','sc'));
+  emo='';bval='';imgs=[];renderSS();
+}
+
+
+/* REVIEW */
+let currentReviewId=null, slideImgs=[], slideIdx=0;
+
+function openReview(id){
+  const t=trades.find(t=>t.id==id);if(!t)return;
+  currentReviewId=id;
+  const rb=t.result==='Win'?'bw':t.result==='Loss'?'bl':t.result==='Break even'?'bbe':'bbe';
+  const pc=(+t.pnl||0)>0?'pp':(+t.pnl||0)<0?'pn':'';
+
+  g('rv-title').textContent=(t.asset||'Trade')+' — '+fixDate(t.date);
+
+  g('rv-chips').innerHTML=`
+    ${t.account?`<span class="badge ${t.account==='Evaluation'?'bev':t.account==='Funded'?'bfu':'bbt'}">${t.account}</span>`:''}
+    ${t.session?`<span class="chip" style="padding:3px 10px;font-size:11px;">${t.session}</span>`:''}
+    ${bDir(t.dir)}
+    ${t.result?`<span class="badge ${rb}">${t.result}</span>`:''}
+    ${t.pnl?`<span class="${pc}" style="font-size:14px;font-weight:500;">${ps(t.pnl)}</span>`:''}
+    ${t.news?`<span class="badge" style="background:#FEF3C7;color:#92400E;">${t.news}${t.newsTime?' · '+t.newsTime:''}</span>`:''}
+    ${t.time?`<span style="font-size:12px;color:var(--muted);">${t.time}</span>`:''}
+  `;
+
+  g('rv-fields').innerHTML=`
+    <div class="ef"><div class="ef-l">Daily bias</div><div class="ef-v">${t.bias||'—'}</div></div>
+    <div class="ef"><div class="ef-l">Daily profile</div><div class="ef-v">${t.profile||'—'}</div></div>
+    <div class="ef"><div class="ef-l">CIC</div><div class="ef-v">${t.cic||'—'}</div></div>
+    <div class="ef"><div class="ef-l">Entry model</div><div class="ef-v">${t.entryModel||'—'}</div></div>
+    <div class="ef"><div class="ef-l">Time frame</div><div class="ef-v">${t.tf||'—'}</div></div>
+    <div class="ef"><div class="ef-l">R:R planned</div><div class="ef-v">${t.rrPlan?t.rrPlan+'R':'—'}</div></div>
+    <div class="ef"><div class="ef-l">R:R achieved</div><div class="ef-v">${t.rr?t.rr+'R':'—'}</div></div>
+    <div class="ef"><div class="ef-l">Risk</div><div class="ef-v">${t.risk?'$'+(+t.risk).toFixed(0):'—'}</div></div>
+    <div class="ef"><div class="ef-l">Profit</div><div class="ef-v">${t.profit?ps(t.profit):'—'}</div></div>
+    ${t.news?`<div class="ef"><div class="ef-l">News</div><div class="ef-v">${t.news}${t.newsTime?' · '+t.newsTime:''}</div></div>`:''}
+  `;
+
+  // screenshots
+  slideImgs=t.imgs||[];slideIdx=0;
+  renderSlide();
+
+  // psychology & notes
+  if(t.psych){g('rv-psych-wrap').style.display='block';g('rv-psych').textContent=t.psych;}
+  else{g('rv-psych-wrap').style.display='none';}
+  if(t.notes){g('rv-notes-box').style.display='block';g('rv-notes').textContent=t.notes;}
+  else{g('rv-notes-box').style.display='none';}
+
+  g('review-modal').classList.add('open');
+}
+
+function renderSlide(){
+  const total=slideImgs.length;
+  if(total===0){
+    g('rv-ss-img').style.display='none';
+    g('rv-ss-empty').style.display='flex';
+    g('rv-prev').style.display='none';
+    g('rv-next').style.display='none';
+    g('rv-ss-counter').textContent='';
+    g('rv-dots').innerHTML='';
+    return;
+  }
+  g('rv-ss-img').style.display='block';
+  g('rv-ss-empty').style.display='none';
+  g('rv-prev').style.display=total>1?'flex':'none';
+  g('rv-next').style.display=total>1?'flex':'none';
+  g('rv-ss-img').src=slideImgs[slideIdx];
+  g('rv-ss-counter').textContent=`(${slideIdx+1} / ${total})`;
+  g('rv-dots').innerHTML=slideImgs.map((_,i)=>
+    `<div onclick="goSlide(${i})" style="width:${i===slideIdx?20:8}px;height:8px;border-radius:4px;background:${i===slideIdx?'var(--green)':'var(--border-s)'};cursor:pointer;transition:all .2s;"></div>`
+  ).join('');
+}
+
+function slideNav(dir){
+  slideIdx=(slideIdx+dir+slideImgs.length)%slideImgs.length;
+  renderSlide();
+}
+
+function goSlide(i){slideIdx=i;renderSlide();}
+
+function closeReview(){g('review-modal').classList.remove('open');currentReviewId=null;}
+
+/* EDIT */
+function openEdit(id){
+  const t=trades.find(t=>t.id==id);if(!t)return;
+  editId=id;
+  ['date','session','time','account','asset','dir','profile','cic','bias','em','tf','result','rrp','rr','risk','profit','pnl','psych','notes'].forEach(k=>{
+    const field={'date':'e-date','session':'e-session','time':'e-time','account':'e-account','asset':'e-asset','dir':'e-dir','profile':'e-profile','cic':'e-cic','news':'e-news','newsTime':'e-newstime','bias':'e-bias','em':'e-em','tf':'e-tf','result':'e-result','rrp':'e-rrp','rr':'e-rr','risk':'e-risk','profit':'e-profit','pnl':'e-pnl','psych':'e-psych','notes':'e-notes'}[k];
+    const src={'date':t.date,'session':t.session,'time':t.time,'account':t.account,'asset':t.asset,'dir':t.dir,'profile':t.profile,'cic':t.cic,'news':t.news,'newsTime':t.newsTime,'bias':t.bias,'em':t.entryModel,'tf':t.tf,'result':t.result,'rrp':t.rrPlan,'rr':t.rr,'risk':t.risk,'profit':t.profit,'pnl':t.pnl,'psych':t.psych,'notes':t.notes}[k];
+    const el=g(field);if(el)el.value=src||'';
+  });
+  g('edit-modal').classList.add('open');
+}
+
+function closeEdit(){g('edit-modal').classList.remove('open');editId=null;}
+
+async function saveEdit(){
+  if(!editId)return;
+  const idx=trades.findIndex(t=>t.id==editId);if(idx<0)return;
+  const t=trades[idx];
+  t.date=fixDate(g('e-date').value);t.session=g('e-session').value;t.time=g('e-time').value;
+  t.account=g('e-account').value;t.asset=g('e-asset').value;t.dir=g('e-dir').value;
+  t.profile=g('e-profile').value;t.cic=g('e-cic').value;t.news=g('e-news').value;t.newsTime=g('e-newstime').value;t.bias=g('e-bias').value;
+  t.entryModel=g('e-em').value;t.tf=g('e-tf').value;t.result=g('e-result').value;
+  t.rrPlan=+g('e-rrp').value||0;t.rr=+g('e-rr').value||0;
+  t.risk=+g('e-risk').value||0;t.profit=+g('e-profit').value||0;t.pnl=+g('e-pnl').value||0;
+  t.psych=g('e-psych').value;t.notes=g('e-notes').value;
+  localStorage.setItem('ftj',JSON.stringify(trades));
+  closeEdit();renderLog();
+  // delete old + save new to sheets
+  try{
+    await fetch(GS,{method:'POST',body:JSON.stringify({action:'delete',id:editId})});
+    await fetch(GS,{method:'POST',body:JSON.stringify({action:'save',trade:t})});
+    setSS('synced','Synced · '+trades.length+' trades');
+  }catch{setSS('error','Local updated — Sheets sync failed');}
+}
+
+async function deleteTrade(id){
+  if(!confirm('Delete this trade?'))return;
+  trades=trades.filter(t=>t.id!=id);
+  localStorage.setItem('ftj',JSON.stringify(trades));
+  updateH();renderLog();
+  try{await fetch(GS,{method:'POST',body:JSON.stringify({action:'delete',id})});setSS('synced','Synced · '+trades.length+' trades');}
+  catch{setSS('error','Failed to delete from Sheets');}
+}
+
+function updateH(){g('hdr-total').textContent=trades.length;}
+
+/* CALENDAR */
+function chMonth(d){cm+=d;if(cm>11){cm=0;cy++;}if(cm<0){cm=11;cy--;}closeDd();renderCal();}
+function renderCal(){
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  g('cal-title').textContent=months[cm]+' '+cy;
+  const fd=new Date(cy,cm,1).getDay(),days=new Date(cy,cm+1,0).getDate();
+  const ts=now.toISOString().slice(0,10);
+  const bd={};trades.forEach(t=>{const d=fixDate(t.date);if(!bd[d])bd[d]=[];bd[d].push(t);});
+  const dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let h=dn.map(d=>`<div class="cdn">${d}</div>`).join('');
+  for(let i=0;i<fd;i++)h+=`<div class="cc empty"></div>`;
+  for(let d=1;d<=days;d++){
+    const ds=cy+'-'+String(cm+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const dt=bd[ds]||[],has=dt.length>0;
+    const tp=dt.reduce((a,t)=>a+(+t.pnl||0),0);
+    const w=dt.filter(t=>t.result==='Win').length,l=dt.filter(t=>t.result==='Loss').length,be=dt.filter(t=>t.result==='Break even').length;
+    let cls='cc'+(ds===ts?' today':'')+(has?' ht':'');
+    let inner=`<div class="cdate">${d}</div>`;
+    if(has){
+      inner+=`<div class="cpnl ${tp>=0?'pos':'neg'}">${ps(tp)}</div><div class="cpills">`;
+      for(let i=0;i<w;i++)inner+=`<span class="cp cpw">W</span>`;
+      for(let i=0;i<l;i++)inner+=`<span class="cp cpl">L</span>`;
+      for(let i=0;i<be;i++)inner+=`<span class="cp cpb">BE</span>`;
+      inner+=`</div>`;
+    }
+    h+=`<div class="${cls}" ${has?`onclick="openDd('${ds}')"`:''}>${inner}</div>`;
+  }
+  g('cal-grid').innerHTML=h;
+}
+function openDd(ds){
+  const dt=trades.filter(t=>fixDate(t.date)===ds);if(!dt.length)return;
+  const [y,m,d]=ds.split('-');
+  g('dd-title').textContent=new Date(+y,+m-1,+d).toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const tp=dt.reduce((a,t)=>a+(+t.pnl||0),0);
+  const w=dt.filter(t=>t.result==='Win').length,l=dt.filter(t=>t.result==='Loss').length;
+  g('dd-chips').innerHTML=`<div class="chip">${dt.length} trade${dt.length>1?'s':''}</div><div class="chip" style="color:${tp>=0?'var(--green)':'var(--red)'};font-weight:500;">P&L: ${ps(tp)}</div><div class="chip" style="color:var(--green);">${w}W</div><div class="chip" style="color:var(--red);">${l}L</div>`;
+  g('dd-entries').innerHTML=dt.map(t=>{
+    const rb=t.result==='Win'?'bw':t.result==='Loss'?'bl':t.result==='Break even'?'bbe':'bbe';
+    const pc=(+t.pnl||0)>0?'pp':(+t.pnl||0)<0?'pn':'';
+    const iss=(t.imgs&&t.imgs.length)?`<div class="ec-ss">${t.imgs.map(s=>`<img src="${s}" onclick="openLb('${s}')">`).join('')}</div>`:'';
+    return `<div class="ec">
+      <div class="ec-top">
+        ${t.news?`<span class="badge" style="background:#FEF3C7;color:#92400E;">${t.news}${t.newsTime?' · '+t.newsTime:''}</span>`:''}
+    ${t.time?`<span style="font-size:12px;color:var(--muted);">${t.time}</span>`:''}
+        ${t.account?`<span class="badge ${t.account==='Evaluation'?'bev':t.account==='Funded'?'bfu':'bbt'}">${t.account}</span>`:''}
+        <span style="font-size:13px;font-weight:500;">${t.asset||''}</span>
+        ${bDir(t.dir)}
+        ${t.result?`<span class="badge ${rb}">${t.result}</span>`:''}
+        ${t.pnl?`<span class="${pc}" style="font-size:13px;">${ps(t.pnl)}</span>`:''}
+      </div>
+      <div class="ec-fields">
+        <div class="ef"><div class="ef-l">Session</div><div class="ef-v">${t.session||'—'}</div></div>
+        <div class="ef"><div class="ef-l">Daily bias</div><div class="ef-v">${t.bias||'—'}</div></div>
+        <div class="ef"><div class="ef-l">Daily profile</div><div class="ef-v">${t.profile||'—'}</div></div>
+        <div class="ef"><div class="ef-l">CIC</div><div class="ef-v">${t.cic||'—'}</div></div>
+        <div class="ef"><div class="ef-l">Entry model</div><div class="ef-v">${t.entryModel||'—'}</div></div>
+        <div class="ef"><div class="ef-l">TF</div><div class="ef-v">${t.tf||'—'}</div></div>
+        <div class="ef"><div class="ef-l">R:R planned</div><div class="ef-v">${t.rrPlan?t.rrPlan+'R':'—'}</div></div>
+        <div class="ef"><div class="ef-l">R:R achieved</div><div class="ef-v">${t.rr?t.rr+'R':'—'}</div></div>
+        <div class="ef"><div class="ef-l">Risk $</div><div class="ef-v">${t.risk?'$'+(+t.risk).toFixed(0):'—'}</div></div>
+      </div>
+      ${(t.notes||t.psych)?`<div class="ec-notes">${t.psych?'<strong>Psychology:</strong> '+t.psych+'<br>':''}${t.notes?'<strong>Notes:</strong> '+t.notes:''}</div>`:''}
+      ${iss}
+    </div>`;
+  }).join('');
+  g('dd').classList.add('open');
+  g('dd').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function closeDd(){g('dd').classList.remove('open');}
+
+/* LOG */
+function renderLog(){
+  const fs=g('fl-s').value,fa=g('fl-a').value,fas=g('fl-as').value,fr=g('fl-r').value;
+  let f=trades.filter(t=>(!fs||t.session===fs)&&(!fa||t.account===fa)&&(!fas||t.asset===fas)&&(!fr||t.result===fr));
+  g('log-cnt').textContent=f.length+' trade'+(f.length!==1?'s':'');
+  const list=g('trade-list');
+  if(!f.length){list.innerHTML='<div class="nt">No trades found.</div>';return;}
+  list.innerHTML=f.map(t=>{
+    const pc=(+t.pnl||0)>0?'pp':(+t.pnl||0)<0?'pn':'';
+    const rb=t.result==='Win'?'bw':t.result==='Loss'?'bl':t.result==='Break even'?'bbe':'bbe';
+    const pr=t.profile?t.profile.replace('continuation','cont.').replace('reversal','rev.'):'—';
+    return `<div class="tr">
+      <span>${fixDate(t.date)}</span><span>${bAcc(t.account)}</span><span>${t.asset||'—'}</span>
+      <span>${bBias(t.bias)}</span><span style="font-size:10px;">${pr}</span>
+      <span>${t.cic?`<span class="badge bci">${t.cic}</span>`:'—'}</span>
+      <span>${t.news?`<span class="badge" style="background:#FEF3C7;color:#92400E;font-size:9px;">${t.news}</span>`:'—'}</span>
+      <span style="font-weight:500;">${t.tf||'—'}</span>
+      <span>${t.entryModel?`<span class="badge bem">${t.entryModel}</span>`:'—'}</span>
+      <span>${t.rrPlan?t.rrPlan+'R':'—'}</span><span>${t.rr?t.rr+'R':'—'}</span>
+      <span style="color:var(--red);">${t.risk?'$'+(+t.risk).toFixed(0):'—'}</span>
+      <span class="${pc}">${ps(t.pnl)}</span>
+      <div class="tr-actions">
+        <button class="rb" onclick="openReview(${t.id})" title="Review"><i class="ti ti-eye"></i></button>
+        <button class="eb" onclick="openEdit(${t.id})" title="Edit"><i class="ti ti-edit"></i></button>
+        <button class="db" onclick="deleteTrade(${t.id})" title="Delete"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ANALYTICS */
+function calcWR(arr){
+  const w=arr.filter(t=>t.result==='Win').length;
+  const total=arr.filter(t=>t.result==='Win'||t.result==='Loss').length;
+  return total===0?null:{wr:Math.round(w/total*100),w,total};
+}
+
+function wrRows(groups,data){
+  return Object.entries(groups).sort((a,b)=>{
+    const wa=calcWR(a[1]),wb=calcWR(b[1]);
+    return (wb?wb.wr:0)-(wa?wa.wr:0);
+  }).map(([key,arr])=>{
+    const r=calcWR(arr);
+    if(!r)return'';
+    const color=r.wr>=60?'var(--green)':r.wr>=40?'#ef9f27':'var(--red)';
+    const pnlSum=arr.reduce((a,t)=>a+(+t.pnl||0),0);
+    return `<div class="wr-row">
+      <div>
+        <div class="wr-key">${key}</div>
+        <div class="wr-trades">${r.total} trades · ${ps(pnlSum)}</div>
+      </div>
+      <div class="wr-bar-wrap">
+        <div class="wr-bar-bg"><div class="wr-bar-fill" style="width:${r.wr}%;background:${color};"></div></div>
+        <div class="wr-pct" style="color:${color};">${r.wr}%</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAnalytics(){
+  const aa=g('ana-asset').value,as=g('ana-session').value,aac=g('ana-account').value;
+  let f=trades.filter(t=>(!aa||t.asset===aa)&&(!as||t.session===as)&&(!aac||t.account===aac));
+  const tot=f.length;
+  const wr=calcWR(f);
+  const totalPnl=f.reduce((a,t)=>a+(+t.pnl||0),0);
+  const totalProfit=f.reduce((a,t)=>a+(+t.profit||0),0);
+
+  g('ana-info').textContent=tot+' trades matching filter';
+
+  g('ana-summary').innerHTML=`
+    <div class="sc"><div class="sl">Trades</div><div class="sv">${tot}</div></div>
+    <div class="sc"><div class="sl">Win rate</div><div class="sv ${wr&&wr.wr>=50?'g':'r'}">${wr?wr.wr+'%':'—'}</div></div>
+    <div class="sc"><div class="sl">Total P&L</div><div class="sv ${totalPnl>=0?'g':'r'}">${ps(totalPnl)}</div></div>
+    <div class="sc"><div class="sl">Total profit</div><div class="sv ${totalProfit>=0?'g':'r'}">${ps(totalProfit)}</div></div>
+  `;
+
+  if(!tot){
+    g('ana-grid').innerHTML='<div style="grid-column:1/-1;color:var(--muted);padding:2rem 0;font-size:13px;">No data for selected filters. Try adjusting the filters above.</div>';
+    return;
+  }
+
+  // group by bias
+  const byBias={};f.forEach(t=>{const k=t.bias||'Unknown';if(!byBias[k])byBias[k]=[];byBias[k].push(t);});
+  // group by session
+  const bySes={};f.forEach(t=>{const k=t.session||'Unknown';if(!bySes[k])bySes[k]=[];bySes[k].push(t);});
+  // group by entry model
+  const byEM={};f.forEach(t=>{const k=t.entryModel||'Unknown';if(!byEM[k])byEM[k]=[];byEM[k].push(t);});
+  // group by TF
+  const byTF={};f.forEach(t=>{const k=t.tf||'Unknown';if(!byTF[k])byTF[k]=[];byTF[k].push(t);});
+  // group by CIC
+  const byCIC={};f.forEach(t=>{const k=t.cic||'Unknown';if(!byCIC[k])byCIC[k]=[];byCIC[k].push(t);});
+  // group by direction
+  const byDir={};f.forEach(t=>{const k=t.dir||'Unknown';if(!byDir[k])byDir[k]=[];byDir[k].push(t);});
+
+  const mkCard=(title,groups)=>`<div class="ana-card">
+    <div class="ana-card-title">${title}</div>
+    ${wrRows(groups,f)||'<div class="ana-empty">No data</div>'}
+  </div>`;
+
+  g('ana-grid').innerHTML=
+    mkCard('Win rate by daily bias',byBias)+
+    mkCard('Win rate by session',bySes)+
+    mkCard('Win rate by entry model',byEM)+
+    mkCard('Win rate by time frame',byTF)+
+    mkCard('Win rate by CIC',byCIC)+
+    mkCard('Win rate by direction',byDir);
+}
+
+/* STATS */
+function renderBars(id,key){
+  const grp={};trades.forEach(t=>{const k=t[key]||'Unknown';grp[k]=(grp[k]||0)+(+t.pnl||0);});
+  const ent=Object.entries(grp);
+  if(!ent.length){g(id).innerHTML='<div style="color:var(--muted);font-size:13px;">No data yet.</div>';return;}
+  const mx=Math.max(...ent.map(([,v])=>Math.abs(v)),1);
+  g(id).innerHTML=ent.map(([k,v])=>{
+    const p=Math.round(Math.abs(v)/mx*100),c=v>=0?'var(--green)':'var(--red)';
+    return `<div class="eq-row"><div class="eq-lbl">${k}</div><div class="eq-bg"><div class="eq-bar" style="width:${p}%;background:${c};"></div></div><div class="eq-val" style="color:${c};">${ps(v)}</div></div>`;
+  }).join('');
+}
+
+function renderStats(){
+  const n=trades.length;g('s-tot').textContent=n;if(!n)return;
+  const w=trades.filter(t=>t.result==='Win').length,l=trades.filter(t=>t.result==='Loss').length;
+  const tp=trades.reduce((a,t)=>a+(+t.pnl||0),0);
+  const tpr=trades.reduce((a,t)=>a+(+t.profit||0),0);
+  const rrps=trades.map(t=>+t.rrPlan).filter(r=>r>0);
+  const rrs=trades.map(t=>+t.rr).filter(r=>r>0);
+  const pnls=trades.map(t=>+t.pnl||0);
+  const best=Math.max(...pnls,0);
+  const gw=pnls.filter(p=>p>0).reduce((a,b)=>a+b,0);
+  const gl=Math.abs(pnls.filter(p=>p<0).reduce((a,b)=>a+b,0));
+  const ev=trades.filter(t=>t.account==='Evaluation').reduce((a,t)=>a+(+t.pnl||0),0);
+  const fu=trades.filter(t=>t.account==='Funded').reduce((a,t)=>a+(+t.pnl||0),0);
+  const bt=trades.filter(t=>t.account==='Backtest').reduce((a,t)=>a+(+t.pnl||0),0);
+  g('s-wr').textContent=Math.round(w/n*100)+'%';
+  g('s-pnl').textContent=ps(tp);g('s-pnl').className='sv '+(tp>=0?'g':'r');
+  g('s-pr').textContent=ps(tpr); g('s-pr').className='sv '+(tpr>=0?'g':'r');
+  g('s-rrp').textContent=rrps.length?(rrps.reduce((a,b)=>a+b,0)/rrps.length).toFixed(2)+'R':'—';
+  g('s-rr').textContent=rrs.length?(rrs.reduce((a,b)=>a+b,0)/rrs.length).toFixed(2)+'R':'—';
+  g('s-best').textContent='+$'+best.toFixed(2);
+  g('s-pf').textContent=gl?(gw/gl).toFixed(2):gw>0?'∞':'0';
+  g('s-wins').textContent=w;g('s-losses').textContent=l;
+  g('win-bar').style.width=(w+l?Math.round(w/(w+l)*100):0)+'%';
+  const ee=g('s-ev');ee.textContent=ps(ev);ee.className='sv '+(ev>=0?'g':'r');
+  const fe=g('s-fu');fe.textContent=ps(fu);fe.className='sv '+(fu>=0?'g':'r');
+  const be=g('s-bt');be.textContent=ps(bt);be.className='sv '+(bt>=0?'g':'r');
+  renderBars('b-ses','session');renderBars('b-bias','bias');renderBars('b-cic','cic');
+  renderBars('b-em','entryModel');renderBars('b-tf','tf');renderBars('b-as','asset');
+}
+
+function exportCSV(){
+  if(!trades.length){alert('No trades to export.');return;}
+  const h=['Date','Time','Account','Session','Asset','Direction','Daily Profile','Daily Bias','CIC','News','News Time','Entry Model','TF','RR Planned','RR Achieved','Risk($)','Profit($)','PnL($)','Result','Emotion','Psychology Notes','Trade Notes'];
+  const r=trades.map(t=>[fixDate(t.date),t.time,t.account,t.session,t.asset,t.dir,t.profile,t.bias,t.cic,t.news||'',t.newsTime||'',t.entryModel,t.tf,t.rrPlan,t.rr,t.risk,t.profit,t.pnl,t.result,t.emotion,(t.psych||'').replace(/,/g,' '),(t.notes||'').replace(/,/g,' ')]);
+  const csv=[h,...r].map(x=>x.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='trading_journal_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+
+function signInGDManual() {
+  signInGD().then(() => {
+    g('gd-btn').innerHTML = '<i class="ti ti-brand-google-drive"></i> Drive connected';
+    g('gd-btn').style.color = 'var(--green)';
+    g('gd-btn').style.borderColor = 'var(--green)';
+    g('gd-btn').onclick = null;
+  }).catch(e => {
+    alert('Failed to connect Google Drive: ' + e);
+  });
+}
+
+loadSheets();
+</script>
+</body>
+</html>
