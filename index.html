@@ -233,7 +233,41 @@ textarea{resize:vertical;min-height:70px;}
         <select id="e-cic"><option value="">Select</option><option>SMT</option><option>PSP</option><option>SMT&SMT</option><option>SMT&PSP</option><option>SSMT</option></select>
       </div>
       <div class="f"><label>News event</label>
-        <select id="e-news"><option value="">No news</option><option>FOMC</option><option>Core PCE</option><option>ISM Manufacturing</option><option>ISM Services</option><option>ADP Non Farm</option><option>NFP</option><option>CPI</option><option>Core PPI</option></select>
+        <select id="e-news"><option value="">No news</option>
+<optgroup label="Employment">
+<option>NFP</option>
+<option>ADP Non Farm</option>
+<option>Jobless Claims</option>
+<option>JOLTS Job Openings</option>
+</optgroup>
+<optgroup label="Inflation">
+<option>CPI</option>
+<option>Core PCE</option>
+<option>PPI</option>
+<option>Core PPI</option>
+</optgroup>
+<optgroup label="Growth">
+<option>GDP Advance</option>
+<option>GDP Preliminary</option>
+<option>Retail Sales</option>
+<option>Durable Goods Orders</option>
+<option>Personal Income</option>
+</optgroup>
+<optgroup label="Sentiment / Activity">
+<option>ISM Manufacturing</option>
+<option>ISM Services</option>
+<option>PMI Flash</option>
+<option>Consumer Confidence</option>
+</optgroup>
+<optgroup label="Housing">
+<option>New Home Sales</option>
+<option>Existing Home Sales</option>
+</optgroup>
+<optgroup label="Fed">
+<option>FOMC</option>
+<option>Fed Chair Speech</option>
+</optgroup>
+</select>
       </div>
       <div class="f"><label>News time</label>
         <input type="time" id="e-newstime">
@@ -378,7 +412,41 @@ textarea{resize:vertical;min-height:70px;}
           <select id="fcic"><option value="">Select CIC</option><option>SMT</option><option>PSP</option><option>SMT&SMT</option><option>SMT&PSP</option><option>SSMT</option></select>
         </div>
         <div class="f"><label>News event</label>
-          <select id="fnews"><option value="">No news</option><option>FOMC</option><option>Core PCE</option><option>ISM Manufacturing</option><option>ISM Services</option><option>ADP Non Farm</option><option>NFP</option><option>CPI</option><option>Core PPI</option></select>
+          <select id="fnews"><option value="">No news</option>
+<optgroup label="Employment">
+<option>NFP</option>
+<option>ADP Non Farm</option>
+<option>Jobless Claims</option>
+<option>JOLTS Job Openings</option>
+</optgroup>
+<optgroup label="Inflation">
+<option>CPI</option>
+<option>Core PCE</option>
+<option>PPI</option>
+<option>Core PPI</option>
+</optgroup>
+<optgroup label="Growth">
+<option>GDP Advance</option>
+<option>GDP Preliminary</option>
+<option>Retail Sales</option>
+<option>Durable Goods Orders</option>
+<option>Personal Income</option>
+</optgroup>
+<optgroup label="Sentiment / Activity">
+<option>ISM Manufacturing</option>
+<option>ISM Services</option>
+<option>PMI Flash</option>
+<option>Consumer Confidence</option>
+</optgroup>
+<optgroup label="Housing">
+<option>New Home Sales</option>
+<option>Existing Home Sales</option>
+</optgroup>
+<optgroup label="Fed">
+<option>FOMC</option>
+<option>Fed Chair Speech</option>
+</optgroup>
+</select>
         </div>
         <div class="f"><label>News time</label>
           <input type="time" id="fnewstime" placeholder="News release time">
