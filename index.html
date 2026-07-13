@@ -822,6 +822,14 @@ function saveDN(){
   localStorage.setItem('ftj_notes', JSON.stringify(dailyNotes));
   closeDNModal();
   renderDNList();
+  // save to Google Sheets
+  const noteToSave = editingDNId ? dailyNotes.find(n=>n.id==editingDNId) : dailyNotes[0];
+  if(noteToSave){
+    fetch(GS,{method:'POST',body:JSON.stringify({action:'saveNote',note:{...noteToSave,imgs:noteToSave.imgs||[]}})})
+    .then(r=>r.json())
+    .then(d=>{ if(d.success) setSS('synced','Synced · '+trades.length+' trades'); })
+    .catch(e=>console.error('saveNote error:',e));
+  }
 }
 
 function deleteDN(){
@@ -831,6 +839,14 @@ function deleteDN(){
   localStorage.setItem('ftj_notes', JSON.stringify(dailyNotes));
   closeDNModal();
   renderDNList();
+  // save to Google Sheets
+  const noteToSave = editingDNId ? dailyNotes.find(n=>n.id==editingDNId) : dailyNotes[0];
+  if(noteToSave){
+    fetch(GS,{method:'POST',body:JSON.stringify({action:'saveNote',note:{...noteToSave,imgs:noteToSave.imgs||[]}})})
+    .then(r=>r.json())
+    .then(d=>{ if(d.success) setSS('synced','Synced · '+trades.length+' trades'); })
+    .catch(e=>console.error('saveNote error:',e));
+  }
 }
 
 /* GOOGLE DRIVE */
@@ -982,6 +998,19 @@ async function loadSheets(){
       }));
       trades.sort((a,b)=>b.id-a.id);
       localStorage.setItem('ftj',JSON.stringify(trades));
+      // load daily notes from sheets
+      if(d.dailyNotes){
+        // merge with local notes (local takes priority for imgs)
+        const localNotes=JSON.parse(localStorage.getItem('ftj_notes')||'[]');
+        const localMap={};
+        localNotes.forEach(n=>{ localMap[String(n.id)]=n; });
+        dailyNotes=d.dailyNotes.map(n=>({
+          ...n,
+          imgs: (localMap[String(n.id)]&&localMap[String(n.id)].imgs) ? localMap[String(n.id)].imgs : (n.imgs||[])
+        }));
+        dailyNotes.sort((a,b)=>b.date.localeCompare(a.date));
+        localStorage.setItem('ftj_notes',JSON.stringify(dailyNotes));
+      }
       updateH();setSS('synced','Synced · '+trades.length+' trades');
     } else {
       throw new Error(d.error||'No trades in response');
