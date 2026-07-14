@@ -366,7 +366,7 @@ textarea{resize:vertical;min-height:70px;}
 
   <div class="sync-bar">
     <div class="dot syncing" id="sync-dot"></div>
-    <span id="sync-status">Connecting to Google Sheets...</span>
+    <span id="sync-status">Connecting to Google Sheets...</span><span style="font-size:10px;color:var(--hint);margin-left:6px;">build 7</span>
     <button class="btn-s" id="gd-btn" onclick="signInGDManual()" style="font-size:11px;padding:4px 10px;margin-left:8px;display:flex;align-items:center;gap:4px;"><i class="ti ti-brand-google-drive"></i> Connect Drive</button>
     <button class="sync-btn" onclick="loadSheets()" title="Refresh"><i class="ti ti-refresh"></i></button>
   </div>
@@ -698,23 +698,27 @@ function trigDNUp(){ if(dnImgs.length<DN_MAX) g('dn-img').click(); }
 
 function handleDNImg(e){
   const rem=DN_MAX-dnImgs.length;
-  Array.from(e.target.files).slice(0,rem).forEach(f=>{
+  const files=Array.from(e.target.files).slice(0,rem);
+  e.target.value='';
+  files.forEach(f=>{
     const r=new FileReader();
     r.onload=async ev=>{
-      let src=ev.target.result;
-      // upload to GDrive if connected
-      if(isGDTokenValid()){
-        const ext=src.split(';')[0].split('/')[1]||'jpg';
-        const fname=`note_${Date.now()}_${dnImgs.length+1}.${ext}`;
-        const url=await uploadToGDrive(src,fname);
-        if(url) src=url;
+      const src=ev.target.result;
+      const ext=(src.split(';')[0].split('/')[1]||'jpg').replace('jpeg','jpg');
+      const fname=`note_${Date.now()}_${dnImgs.length+1}.${ext}`;
+      const cnt=g('dn-ss-count');
+      cnt.textContent='Uploading to Google Drive...';
+      const url=await uploadToGDrive(src,fname);
+      if(!url){
+        alert('Screenshot upload failed. Connect Google Drive first (button next to the sync bar), then try again.');
+        renderDNSS();
+        return;
       }
-      dnImgs.push(src);
+      dnImgs.push(url);
       renderDNSS();
     };
     r.readAsDataURL(f);
   });
-  e.target.value='';
 }
 
 function rmDNImg(i){ dnImgs.splice(i,1); renderDNSS(); }
@@ -1006,9 +1010,10 @@ async function loadSheets(){
         localNotes.forEach(n=>{ localMap[String(n.id)]=n; });
         dailyNotes=d.dailyNotes.map(n=>({
           ...n,
-          imgs: (localMap[String(n.id)]&&localMap[String(n.id)].imgs) ? localMap[String(n.id)].imgs : (n.imgs||[])
+          date: fixDate(n.date),
+          imgs: (localMap[String(n.id)]&&localMap[String(n.id)].imgs&&localMap[String(n.id)].imgs.length) ? localMap[String(n.id)].imgs : (n.imgs||[])
         }));
-        dailyNotes.sort((a,b)=>b.date.localeCompare(a.date));
+        dailyNotes.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
         localStorage.setItem('ftj_notes',JSON.stringify(dailyNotes));
       }
       updateH();setSS('synced','Synced · '+trades.length+' trades');
