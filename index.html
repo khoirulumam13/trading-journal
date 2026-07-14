@@ -611,7 +611,7 @@ textarea{resize:vertical;min-height:70px;}
         <textarea id="dn-levels" style="min-height:80px;" placeholder="Key price levels, assets to watch, economic events..."></textarea>
       </div>
       <div class="f" style="margin-bottom:12px;">
-        <label>Screenshots (max 3)</label>
+        <label>Screenshots (max 5)</label>
         <div class="ss-grid" id="dn-ss-grid" style="grid-template-columns:repeat(5,1fr);"></div>
         <div class="ss-count" id="dn-ss-count">0 / 5 screenshots</div>
         <input type="file" id="dn-img" accept="image/*" multiple style="display:none;" onchange="handleDNImg(event)">
@@ -922,7 +922,7 @@ async function uploadToGDrive(base64Data, filename) {
     });
 
     // Return direct image URL
-    return `https://drive.google.com/uc?export=view&id=${data.id}`;
+    return `https://lh3.googleusercontent.com/d/${data.id}`;
   } catch(e) {
     console.error('GDrive upload error:', e);
     return null;
