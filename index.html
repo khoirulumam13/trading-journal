@@ -300,7 +300,6 @@ textarea{resize:vertical;min-height:70px;}
       <div class="f"><label>R:R planned</label><input type="number" id="e-rrp" step="0.1"></div>
       <div class="f"><label>R:R achieved</label><input type="number" id="e-rr" step="0.1"></div>
       <div class="f"><label>Risk ($)</label><input type="number" id="e-risk" step="0.01"></div>
-      <div class="f"><label>Profit ($)</label><input type="number" id="e-profit" step="0.01"></div>
       <div class="f"><label>P&L ($)</label><input type="number" id="e-pnl" step="0.01"></div>
       <div class="f"><label>Balance after ($)</label><input type="number" id="e-bal" step="0.01"></div>
     </div>
@@ -380,7 +379,7 @@ textarea{resize:vertical;min-height:70px;}
 
   <div class="sync-bar">
     <div class="dot syncing" id="sync-dot"></div>
-    <span id="sync-status">Connecting to Google Sheets...</span><span style="font-size:10px;color:var(--hint);margin-left:6px;">build 12</span>
+    <span id="sync-status">Connecting to Google Sheets...</span><span style="font-size:10px;color:var(--hint);margin-left:6px;">build 15</span>
     <button class="btn-s" id="gd-btn" onclick="signInGDManual()" style="font-size:11px;padding:4px 10px;margin-left:8px;display:flex;align-items:center;gap:4px;"><i class="ti ti-brand-google-drive"></i> Connect Drive</button>
     <button class="sync-btn" onclick="loadSheets()" title="Refresh"><i class="ti ti-refresh"></i></button>
   </div>
@@ -498,7 +497,6 @@ textarea{resize:vertical;min-height:70px;}
         <div class="f"><label>R:R planned</label><input type="number" id="frrp" step="0.1" placeholder="e.g. 3.0"></div>
         <div class="f"><label>R:R achieved</label><input type="number" id="frr" step="0.1" placeholder="e.g. 2.5"></div>
         <div class="f"><label>Risk per trade ($)</label><input type="number" id="frisk" step="0.01" placeholder="manual input"></div>
-        <div class="f"><label>Profit ($)</label><input type="number" id="fprofit" step="0.01" placeholder="0.00"></div>
         <div class="f"><label>P&L ($)</label><input type="number" id="fpnl" step="0.01" placeholder="e.g. -410 or 840"></div>
         <div class="f"><label>Balance after ($)</label><input type="number" id="fbal" step="0.01" placeholder="account balance"></div>
         <div class="f"><label>Result</label>
@@ -658,7 +656,7 @@ textarea{resize:vertical;min-height:70px;}
       <div class="sc"><div class="sl">Total trades</div><div class="sv" id="s-tot">0</div></div>
       <div class="sc"><div class="sl">Win rate</div><div class="sv g" id="s-wr">0%</div></div>
       <div class="sc"><div class="sl">Total P&L</div><div class="sv" id="s-pnl">$0</div></div>
-      <div class="sc"><div class="sl">Total profit</div><div class="sv g" id="s-pr">$0</div></div>
+      <div class="sc"><div class="sl">Gross profit</div><div class="sv g" id="s-pr">$0</div></div>
     </div>
     <div class="sg">
       <div class="sc"><div class="sl">Avg R:R planned</div><div class="sv" id="s-rrp">—</div></div>
@@ -1025,11 +1023,17 @@ async function loadSheets(){
         time:fixTime(t.time),
         newsTime:fixTime(t.newsTime),
         newsTime2:fixTime(t.newsTime2),
-        pnl:+t.pnl||0,profit:+t.profit||0,risk:+t.risk||0,balance:+t.balance||0,
+        pnl:+t.pnl||0,risk:+t.risk||0,balance:+t.balance||0,
         rrPlan:+t.rrPlan||0,rr:+t.rr||0,
         imgs: localMap[String(t.id)] || []
       }));
       trades.sort((a,b)=>b.id-a.id);
+      // safety net: keep a copy of whatever was local before we overwrite it
+      const priorLocal=localStorage.getItem('ftj');
+      if(priorLocal && priorLocal!=='[]' && !localStorage.getItem('ftj_backup')){
+        localStorage.setItem('ftj_backup',priorLocal);
+        localStorage.setItem('ftj_backup_at',new Date().toISOString());
+      }
       localStorage.setItem('ftj',JSON.stringify(trades));
       // load daily notes from sheets
       if(d.dailyNotes){
@@ -1126,7 +1130,7 @@ async function saveTrade(){
   if(!date||!session||!asset){alert('Please fill in at least date, session, and asset!');return;}
   const btn=g('btn-save');btn.disabled=true;
   showAlrt('ld','<i class="ti ti-loader"></i> Saving...');
-  const trade={id:Date.now(),date:fixDate(date),time:g('ft').value,account:g('fac').value,session,asset,dir:g('fdir').value,profile:g('fpr').value,bias:bval,cic:g('fcic').value,news:g('fnews').value,newsTime:g('fnewstime').value,news2:g('fnews2').value,newsTime2:g('fnewstime2').value,entryModel:g('fem').value,tf:g('ftf').value,rrPlan:+g('frrp').value||0,rr:+g('frr').value||0,risk:+g('frisk').value||0,profit:+g('fprofit').value||0,pnl:+g('fpnl').value||0,balance:+g('fbal').value||0,result:g('fres').value,emotion:emo,psych:g('fpsych').value,notes:g('fnotes').value,imgs:[...imgs]};
+  const trade={id:Date.now(),date:fixDate(date),time:g('ft').value,account:g('fac').value,session,asset,dir:g('fdir').value,profile:g('fpr').value,bias:bval,cic:g('fcic').value,news:g('fnews').value,newsTime:g('fnewstime').value,news2:g('fnews2').value,newsTime2:g('fnewstime2').value,entryModel:g('fem').value,tf:g('ftf').value,rrPlan:+g('frrp').value||0,rr:+g('frr').value||0,risk:+g('frisk').value||0,pnl:+g('fpnl').value||0,balance:+g('fbal').value||0,result:g('fres').value,emotion:emo,psych:g('fpsych').value,notes:g('fnotes').value,imgs:[...imgs]};
   trades.unshift(trade);localStorage.setItem('ftj',JSON.stringify(trades));updateH();
   try{
     const r=await fetch(GS,{method:'POST',body:JSON.stringify({action:'save',trade})});
@@ -1138,7 +1142,7 @@ async function saveTrade(){
 }
 
 function clearForm(){
-  ['fd','fs','ft','fac','fas','fdir','fpr','fcic','fnews','fnewstime','fnews2','fnewstime2','fem','ftf','frrp','frr','frisk','fprofit','fpnl','fbal','fres','fpsych','fnotes'].forEach(id=>{const e=g(id);if(e)e.value='';});
+  ['fd','fs','ft','fac','fas','fdir','fpr','fcic','fnews','fnewstime','fnews2','fnewstime2','fem','ftf','frrp','frr','frisk','fpnl','fbal','fres','fpsych','fnotes'].forEach(id=>{const e=g(id);if(e)e.value='';});
   g('fd').valueAsDate=new Date();
   document.querySelectorAll('.emo-btn').forEach(e=>e.classList.remove('on'));
   document.querySelectorAll('.bias-btn').forEach(b=>b.classList.remove('sr','sc'));
@@ -1177,7 +1181,6 @@ function openReview(id){
     <div class="ef"><div class="ef-l">R:R planned</div><div class="ef-v">${t.rrPlan?t.rrPlan+'R':'—'}</div></div>
     <div class="ef"><div class="ef-l">R:R achieved</div><div class="ef-v">${t.rr?t.rr+'R':'—'}</div></div>
     <div class="ef"><div class="ef-l">Risk</div><div class="ef-v">${t.risk?'$'+(+t.risk).toFixed(0):'—'}</div></div>
-    <div class="ef"><div class="ef-l">Profit</div><div class="ef-v">${t.profit?ps(t.profit):'—'}</div></div>
     <div class="ef"><div class="ef-l">Balance after</div><div class="ef-v">${t.balance?'$'+(+t.balance).toLocaleString():'—'}</div></div>
     ${t.news?`<div class="ef"><div class="ef-l">News</div><div class="ef-v">${t.news}${t.newsTime?' · '+t.newsTime:''}</div></div>`:''}
     ${t.news2?`<div class="ef"><div class="ef-l">News 2</div><div class="ef-v">${t.news2}${t.newsTime2?' · '+t.newsTime2:''}</div></div>`:''}
@@ -1231,9 +1234,9 @@ function closeReview(){g('review-modal').classList.remove('open');currentReviewI
 function openEdit(id){
   const t=trades.find(t=>t.id==id);if(!t)return;
   editId=id;
-  ['date','session','time','account','asset','dir','profile','cic','bias','em','tf','result','rrp','rr','risk','profit','pnl','psych','notes'].forEach(k=>{
-    const field={'date':'e-date','session':'e-session','time':'e-time','account':'e-account','asset':'e-asset','dir':'e-dir','profile':'e-profile','cic':'e-cic','news':'e-news','newsTime':'e-newstime','news2':'e-news2','newsTime2':'e-newstime2','bias':'e-bias','em':'e-em','tf':'e-tf','result':'e-result','rrp':'e-rrp','rr':'e-rr','risk':'e-risk','profit':'e-profit','pnl':'e-pnl','balance':'e-bal','psych':'e-psych','notes':'e-notes'}[k];
-    const src={'date':t.date,'session':t.session,'time':t.time,'account':t.account,'asset':t.asset,'dir':t.dir,'profile':t.profile,'cic':t.cic,'news':t.news,'newsTime':t.newsTime,'news2':t.news2,'newsTime2':t.newsTime2,'bias':t.bias,'em':t.entryModel,'tf':t.tf,'result':t.result,'rrp':t.rrPlan,'rr':t.rr,'risk':t.risk,'profit':t.profit,'pnl':t.pnl,'balance':t.balance,'psych':t.psych,'notes':t.notes}[k];
+  ['date','session','time','account','asset','dir','profile','cic','bias','em','tf','result','rrp','rr','risk','pnl','balance','psych','notes'].forEach(k=>{
+    const field={'date':'e-date','session':'e-session','time':'e-time','account':'e-account','asset':'e-asset','dir':'e-dir','profile':'e-profile','cic':'e-cic','news':'e-news','newsTime':'e-newstime','news2':'e-news2','newsTime2':'e-newstime2','bias':'e-bias','em':'e-em','tf':'e-tf','result':'e-result','rrp':'e-rrp','rr':'e-rr','risk':'e-risk','pnl':'e-pnl','balance':'e-bal','psych':'e-psych','notes':'e-notes'}[k];
+    const src={'date':t.date,'session':t.session,'time':t.time,'account':t.account,'asset':t.asset,'dir':t.dir,'profile':t.profile,'cic':t.cic,'news':t.news,'newsTime':t.newsTime,'news2':t.news2,'newsTime2':t.newsTime2,'bias':t.bias,'em':t.entryModel,'tf':t.tf,'result':t.result,'rrp':t.rrPlan,'rr':t.rr,'risk':t.risk,'pnl':t.pnl,'balance':t.balance,'psych':t.psych,'notes':t.notes}[k];
     const el=g(field);if(el)el.value=src||'';
   });
   g('edit-modal').classList.add('open');
@@ -1250,16 +1253,22 @@ async function saveEdit(){
   t.profile=g('e-profile').value;t.cic=g('e-cic').value;t.news=g('e-news').value;t.newsTime=g('e-newstime').value;t.news2=g('e-news2').value;t.newsTime2=g('e-newstime2').value;t.bias=g('e-bias').value;
   t.entryModel=g('e-em').value;t.tf=g('e-tf').value;t.result=g('e-result').value;
   t.rrPlan=+g('e-rrp').value||0;t.rr=+g('e-rr').value||0;
-  t.risk=+g('e-risk').value||0;t.profit=+g('e-profit').value||0;t.pnl=+g('e-pnl').value||0;t.balance=+g('e-bal').value||0;
+  t.risk=+g('e-risk').value||0;t.pnl=+g('e-pnl').value||0;t.balance=+g('e-bal').value||0;
   t.psych=g('e-psych').value;t.notes=g('e-notes').value;
+  const savingId=editId;               // capture BEFORE closeEdit nulls it
   localStorage.setItem('ftj',JSON.stringify(trades));
   closeEdit();renderLog();
-  // delete old + save new to sheets
+  setSS('syncing','Saving edit to Google Sheets...');
   try{
-    await fetch(GS,{method:'POST',body:JSON.stringify({action:'delete',id:editId})});
-    await fetch(GS,{method:'POST',body:JSON.stringify({action:'save',trade:t})});
+    const r=await fetch(GS,{method:'POST',body:JSON.stringify({action:'save',trade:{...t,id:savingId}})});
+    const d=await r.json();
+    if(!d.success) throw new Error(d.error||'save rejected');
     setSS('synced','Synced · '+trades.length+' trades');
-  }catch{setSS('error','Local updated — Sheets sync failed');}
+  }catch(e){
+    console.error('saveEdit sync failed:',e);
+    setSS('error','Edit saved locally only — Sheets sync FAILED');
+    alert('Warning: this edit did NOT reach Google Sheets. It exists only on this device. Do not clear your browser data.');
+  }
 }
 
 async function deleteTrade(id){
@@ -1449,7 +1458,7 @@ function renderAnalytics(){
   const tot=f.length;
   const wr=calcWR(f);
   const totalPnl=f.reduce((a,t)=>a+(+t.pnl||0),0);
-  const totalProfit=f.reduce((a,t)=>a+(+t.profit||0),0);
+  const totalProfit=f.reduce((a,t)=>{const v=+t.pnl||0;return v>0?a+v:a;},0);
 
   g('ana-info').textContent=tot+' trades matching filter';
 
@@ -1457,7 +1466,7 @@ function renderAnalytics(){
     <div class="sc"><div class="sl">Trades</div><div class="sv">${tot}</div></div>
     <div class="sc"><div class="sl">Win rate</div><div class="sv ${wr&&wr.wr>=50?'g':'r'}">${wr?wr.wr+'%':'—'}</div></div>
     <div class="sc"><div class="sl">Total P&L</div><div class="sv ${totalPnl>=0?'g':'r'}">${ps(totalPnl)}</div></div>
-    <div class="sc"><div class="sl">Total profit</div><div class="sv ${totalProfit>=0?'g':'r'}">${ps(totalProfit)}</div></div>
+    <div class="sc"><div class="sl">Gross profit</div><div class="sv g">${ps(totalProfit)}</div></div>
   `;
 
   if(!tot){
@@ -1516,7 +1525,7 @@ function renderStats(){
   const n=trades.length;g('s-tot').textContent=n;if(!n)return;
   const w=trades.filter(t=>t.result==='Win').length,l=trades.filter(t=>t.result==='Loss').length;
   const tp=trades.reduce((a,t)=>a+(+t.pnl||0),0);
-  const tpr=trades.reduce((a,t)=>a+(+t.profit||0),0);
+  const tpr=trades.reduce((a,t)=>{const v=+t.pnl||0;return v>0?a+v:a;},0);
   const rrps=trades.map(t=>+t.rrPlan).filter(r=>r>0);
   const rrs=trades.map(t=>+t.rr).filter(r=>r>0);
   const pnls=trades.map(t=>+t.pnl||0);
@@ -1544,8 +1553,8 @@ function renderStats(){
 
 function exportCSV(){
   if(!trades.length){alert('No trades to export.');return;}
-  const h=['Date','Time','Account','Session','Asset','Direction','Daily Profile','Daily Bias','CIC','News','News Time','News 2','News Time 2','Entry Model','TF','RR Planned','RR Achieved','Risk($)','Profit($)','PnL($)','Balance($)','Result','Emotion','Psychology Notes','Trade Notes'];
-  const r=trades.map(t=>[fixDate(t.date),t.time,t.account,t.session,t.asset,t.dir,t.profile,t.bias,t.cic,t.news||'',t.newsTime||'',t.news2||'',t.newsTime2||'',t.entryModel,t.tf,t.rrPlan,t.rr,t.risk,t.profit,t.pnl,t.balance||'',t.result,t.emotion,(t.psych||'').replace(/,/g,' '),(t.notes||'').replace(/,/g,' ')]);
+  const h=['Date','Time','Account','Session','Asset','Direction','Daily Profile','Daily Bias','CIC','News','News Time','News 2','News Time 2','Entry Model','TF','RR Planned','RR Achieved','Risk($)','PnL($)','Balance($)','Result','Emotion','Psychology Notes','Trade Notes'];
+  const r=trades.map(t=>[fixDate(t.date),t.time,t.account,t.session,t.asset,t.dir,t.profile,t.bias,t.cic,t.news||'',t.newsTime||'',t.news2||'',t.newsTime2||'',t.entryModel,t.tf,t.rrPlan,t.rr,t.risk,t.pnl,t.balance||'',t.result,t.emotion,(t.psych||'').replace(/,/g,' '),(t.notes||'').replace(/,/g,' ')]);
   const csv=[h,...r].map(x=>x.join(',')).join('\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
