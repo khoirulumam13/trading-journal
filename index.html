@@ -272,6 +272,19 @@ textarea{resize:vertical;min-height:70px;}
       <div class="f"><label>News time</label>
         <input type="time" id="e-newstime">
       </div>
+      <div class="f"><label>News event 2</label>
+        <select id="e-news2"><option value="">No 2nd news</option>
+<optgroup label="Employment"><option>NFP</option><option>ADP Non Farm</option><option>Jobless Claims</option><option>JOLTS Job Openings</option></optgroup>
+<optgroup label="Inflation"><option>CPI</option><option>Core PCE</option><option>PPI</option><option>Core PPI</option></optgroup>
+<optgroup label="Growth"><option>GDP Advance</option><option>GDP Preliminary</option><option>Retail Sales</option><option>Durable Goods Orders</option><option>Personal Income</option></optgroup>
+<optgroup label="Sentiment / Activity"><option>ISM Manufacturing</option><option>ISM Services</option><option>PMI Flash</option><option>Consumer Confidence</option></optgroup>
+<optgroup label="Housing"><option>New Home Sales</option><option>Existing Home Sales</option></optgroup>
+<optgroup label="Fed"><option>FOMC</option><option>Fed Chair Speech</option></optgroup>
+        </select>
+      </div>
+      <div class="f"><label>News time 2</label>
+        <input type="time" id="e-newstime2">
+      </div>
       <div class="f"><label>Daily bias</label>
         <select id="e-bias"><option value="">Select</option><option>Reversal C2</option><option>Continuation C3</option><option>Continuation C4</option></select>
       </div>
@@ -366,7 +379,7 @@ textarea{resize:vertical;min-height:70px;}
 
   <div class="sync-bar">
     <div class="dot syncing" id="sync-dot"></div>
-    <span id="sync-status">Connecting to Google Sheets...</span><span style="font-size:10px;color:var(--hint);margin-left:6px;">build 9</span>
+    <span id="sync-status">Connecting to Google Sheets...</span><span style="font-size:10px;color:var(--hint);margin-left:6px;">build 11</span>
     <button class="btn-s" id="gd-btn" onclick="signInGDManual()" style="font-size:11px;padding:4px 10px;margin-left:8px;display:flex;align-items:center;gap:4px;"><i class="ti ti-brand-google-drive"></i> Connect Drive</button>
     <button class="sync-btn" onclick="loadSheets()" title="Refresh"><i class="ti ti-refresh"></i></button>
   </div>
@@ -450,6 +463,19 @@ textarea{resize:vertical;min-height:70px;}
         </div>
         <div class="f"><label>News time</label>
           <input type="time" id="fnewstime" placeholder="News release time">
+        </div>
+        <div class="f"><label>News event 2</label>
+          <select id="fnews2"><option value="">No 2nd news</option>
+<optgroup label="Employment"><option>NFP</option><option>ADP Non Farm</option><option>Jobless Claims</option><option>JOLTS Job Openings</option></optgroup>
+<optgroup label="Inflation"><option>CPI</option><option>Core PCE</option><option>PPI</option><option>Core PPI</option></optgroup>
+<optgroup label="Growth"><option>GDP Advance</option><option>GDP Preliminary</option><option>Retail Sales</option><option>Durable Goods Orders</option><option>Personal Income</option></optgroup>
+<optgroup label="Sentiment / Activity"><option>ISM Manufacturing</option><option>ISM Services</option><option>PMI Flash</option><option>Consumer Confidence</option></optgroup>
+<optgroup label="Housing"><option>New Home Sales</option><option>Existing Home Sales</option></optgroup>
+<optgroup label="Fed"><option>FOMC</option><option>Fed Chair Speech</option></optgroup>
+          </select>
+        </div>
+        <div class="f"><label>News time 2</label>
+          <input type="time" id="fnewstime2" placeholder="2nd release time">
         </div>
       </div>
       <div class="sec-lbl">Daily bias</div>
@@ -996,6 +1022,7 @@ async function loadSheets(){
         date:fixDate(t.date),
         time:fixTime(t.time),
         newsTime:fixTime(t.newsTime),
+        newsTime2:fixTime(t.newsTime2),
         pnl:+t.pnl||0,profit:+t.profit||0,risk:+t.risk||0,
         rrPlan:+t.rrPlan||0,rr:+t.rr||0,
         imgs: localMap[String(t.id)] || []
@@ -1097,7 +1124,7 @@ async function saveTrade(){
   if(!date||!session||!asset){alert('Please fill in at least date, session, and asset!');return;}
   const btn=g('btn-save');btn.disabled=true;
   showAlrt('ld','<i class="ti ti-loader"></i> Saving...');
-  const trade={id:Date.now(),date:fixDate(date),time:g('ft').value,account:g('fac').value,session,asset,dir:g('fdir').value,profile:g('fpr').value,bias:bval,cic:g('fcic').value,news:g('fnews').value,newsTime:g('fnewstime').value,entryModel:g('fem').value,tf:g('ftf').value,rrPlan:+g('frrp').value||0,rr:+g('frr').value||0,risk:+g('frisk').value||0,profit:+g('fprofit').value||0,pnl:+g('fpnl').value||0,result:g('fres').value,emotion:emo,psych:g('fpsych').value,notes:g('fnotes').value,imgs:[...imgs]};
+  const trade={id:Date.now(),date:fixDate(date),time:g('ft').value,account:g('fac').value,session,asset,dir:g('fdir').value,profile:g('fpr').value,bias:bval,cic:g('fcic').value,news:g('fnews').value,newsTime:g('fnewstime').value,news2:g('fnews2').value,newsTime2:g('fnewstime2').value,entryModel:g('fem').value,tf:g('ftf').value,rrPlan:+g('frrp').value||0,rr:+g('frr').value||0,risk:+g('frisk').value||0,profit:+g('fprofit').value||0,pnl:+g('fpnl').value||0,result:g('fres').value,emotion:emo,psych:g('fpsych').value,notes:g('fnotes').value,imgs:[...imgs]};
   trades.unshift(trade);localStorage.setItem('ftj',JSON.stringify(trades));updateH();
   try{
     const r=await fetch(GS,{method:'POST',body:JSON.stringify({action:'save',trade})});
@@ -1109,7 +1136,7 @@ async function saveTrade(){
 }
 
 function clearForm(){
-  ['fd','fs','ft','fac','fas','fdir','fpr','fcic','fnews','fnewstime','fem','ftf','frrp','frr','frisk','fprofit','fpnl','fres','fpsych','fnotes'].forEach(id=>{const e=g(id);if(e)e.value='';});
+  ['fd','fs','ft','fac','fas','fdir','fpr','fcic','fnews','fnewstime','fnews2','fnewstime2','fem','ftf','frrp','frr','frisk','fprofit','fpnl','fres','fpsych','fnotes'].forEach(id=>{const e=g(id);if(e)e.value='';});
   g('fd').valueAsDate=new Date();
   document.querySelectorAll('.emo-btn').forEach(e=>e.classList.remove('on'));
   document.querySelectorAll('.bias-btn').forEach(b=>b.classList.remove('sr','sc'));
@@ -1135,6 +1162,7 @@ function openReview(id){
     ${t.result?`<span class="badge ${rb}">${t.result}</span>`:''}
     ${t.pnl?`<span class="${pc}" style="font-size:14px;font-weight:500;">${ps(t.pnl)}</span>`:''}
     ${t.news?`<span class="badge" style="background:#FEF3C7;color:#92400E;">${t.news}${t.newsTime?' · '+t.newsTime:''}</span>`:''}
+    ${t.news2?`<span class="badge" style="background:#FEF3C7;color:#92400E;">${t.news2}${t.newsTime2?' · '+t.newsTime2:''}</span>`:''}
     ${t.time?`<span style="font-size:12px;color:var(--muted);">${t.time}</span>`:''}
   `;
 
@@ -1149,6 +1177,7 @@ function openReview(id){
     <div class="ef"><div class="ef-l">Risk</div><div class="ef-v">${t.risk?'$'+(+t.risk).toFixed(0):'—'}</div></div>
     <div class="ef"><div class="ef-l">Profit</div><div class="ef-v">${t.profit?ps(t.profit):'—'}</div></div>
     ${t.news?`<div class="ef"><div class="ef-l">News</div><div class="ef-v">${t.news}${t.newsTime?' · '+t.newsTime:''}</div></div>`:''}
+    ${t.news2?`<div class="ef"><div class="ef-l">News 2</div><div class="ef-v">${t.news2}${t.newsTime2?' · '+t.newsTime2:''}</div></div>`:''}
   `;
 
   // screenshots
@@ -1200,8 +1229,8 @@ function openEdit(id){
   const t=trades.find(t=>t.id==id);if(!t)return;
   editId=id;
   ['date','session','time','account','asset','dir','profile','cic','bias','em','tf','result','rrp','rr','risk','profit','pnl','psych','notes'].forEach(k=>{
-    const field={'date':'e-date','session':'e-session','time':'e-time','account':'e-account','asset':'e-asset','dir':'e-dir','profile':'e-profile','cic':'e-cic','news':'e-news','newsTime':'e-newstime','bias':'e-bias','em':'e-em','tf':'e-tf','result':'e-result','rrp':'e-rrp','rr':'e-rr','risk':'e-risk','profit':'e-profit','pnl':'e-pnl','psych':'e-psych','notes':'e-notes'}[k];
-    const src={'date':t.date,'session':t.session,'time':t.time,'account':t.account,'asset':t.asset,'dir':t.dir,'profile':t.profile,'cic':t.cic,'news':t.news,'newsTime':t.newsTime,'bias':t.bias,'em':t.entryModel,'tf':t.tf,'result':t.result,'rrp':t.rrPlan,'rr':t.rr,'risk':t.risk,'profit':t.profit,'pnl':t.pnl,'psych':t.psych,'notes':t.notes}[k];
+    const field={'date':'e-date','session':'e-session','time':'e-time','account':'e-account','asset':'e-asset','dir':'e-dir','profile':'e-profile','cic':'e-cic','news':'e-news','newsTime':'e-newstime','news2':'e-news2','newsTime2':'e-newstime2','bias':'e-bias','em':'e-em','tf':'e-tf','result':'e-result','rrp':'e-rrp','rr':'e-rr','risk':'e-risk','profit':'e-profit','pnl':'e-pnl','psych':'e-psych','notes':'e-notes'}[k];
+    const src={'date':t.date,'session':t.session,'time':t.time,'account':t.account,'asset':t.asset,'dir':t.dir,'profile':t.profile,'cic':t.cic,'news':t.news,'newsTime':t.newsTime,'news2':t.news2,'newsTime2':t.newsTime2,'bias':t.bias,'em':t.entryModel,'tf':t.tf,'result':t.result,'rrp':t.rrPlan,'rr':t.rr,'risk':t.risk,'profit':t.profit,'pnl':t.pnl,'psych':t.psych,'notes':t.notes}[k];
     const el=g(field);if(el)el.value=src||'';
   });
   g('edit-modal').classList.add('open');
@@ -1215,7 +1244,7 @@ async function saveEdit(){
   const t=trades[idx];
   t.date=fixDate(g('e-date').value);t.session=g('e-session').value;t.time=g('e-time').value;
   t.account=g('e-account').value;t.asset=g('e-asset').value;t.dir=g('e-dir').value;
-  t.profile=g('e-profile').value;t.cic=g('e-cic').value;t.news=g('e-news').value;t.newsTime=g('e-newstime').value;t.bias=g('e-bias').value;
+  t.profile=g('e-profile').value;t.cic=g('e-cic').value;t.news=g('e-news').value;t.newsTime=g('e-newstime').value;t.news2=g('e-news2').value;t.newsTime2=g('e-newstime2').value;t.bias=g('e-bias').value;
   t.entryModel=g('e-em').value;t.tf=g('e-tf').value;t.result=g('e-result').value;
   t.rrPlan=+g('e-rrp').value||0;t.rr=+g('e-rr').value||0;
   t.risk=+g('e-risk').value||0;t.profit=+g('e-profit').value||0;t.pnl=+g('e-pnl').value||0;
@@ -1300,6 +1329,7 @@ function openDd(ds){
     return `<div class="ec">
       <div class="ec-top">
         ${t.news?`<span class="badge" style="background:#FEF3C7;color:#92400E;">${t.news}${t.newsTime?' · '+t.newsTime:''}</span>`:''}
+    ${t.news2?`<span class="badge" style="background:#FEF3C7;color:#92400E;">${t.news2}${t.newsTime2?' · '+t.newsTime2:''}</span>`:''}
     ${t.time?`<span style="font-size:12px;color:var(--muted);">${t.time}</span>`:''}
         ${t.account?`<span class="badge ${t.account==='Evaluation'?'bev':t.account==='Funded'?'bfu':'bbt'}">${t.account}</span>`:''}
         <span style="font-size:13px;font-weight:500;">${t.asset||''}</span>
@@ -1366,7 +1396,7 @@ function renderLog(){
       <span>${fixDate(t.date)}</span><span>${bAcc(t.account)}</span><span>${t.asset||'—'}</span>
       <span>${bBias(t.bias)}</span><span style="font-size:10px;">${pr}</span>
       <span>${t.cic?`<span class="badge bci">${t.cic}</span>`:'—'}</span>
-      <span>${t.news?`<span class="badge" style="background:#FEF3C7;color:#92400E;font-size:9px;">${t.news}</span>`:'—'}</span>
+      <span>${t.news?`<span class="badge" style="background:#FEF3C7;color:#92400E;font-size:9px;">${t.news}${t.news2?' +1':''}</span>`:'—'}</span>
       <span style="font-weight:500;">${t.tf||'—'}</span>
       <span>${t.entryModel?`<span class="badge bem">${t.entryModel}</span>`:'—'}</span>
       <span>${t.rrPlan?t.rrPlan+'R':'—'}</span><span>${t.rr?t.rr+'R':'—'}</span>
@@ -1444,6 +1474,13 @@ function renderAnalytics(){
   const byCIC={};f.forEach(t=>{const k=t.cic||'Unknown';if(!byCIC[k])byCIC[k]=[];byCIC[k].push(t);});
   // group by direction
   const byDir={};f.forEach(t=>{const k=t.dir||'Unknown';if(!byDir[k])byDir[k]=[];byDir[k].push(t);});
+  // group by news — a trade with 2 events counts under BOTH
+  const byNews={};
+  f.forEach(t=>{
+    const evs=[t.news,t.news2].filter(x=>x&&String(x).trim());
+    if(!evs.length){ if(!byNews['No news'])byNews['No news']=[]; byNews['No news'].push(t); return; }
+    evs.forEach(e=>{ const k=String(e); if(!byNews[k])byNews[k]=[]; byNews[k].push(t); });
+  });
 
   const mkCard=(title,groups)=>`<div class="ana-card">
     <div class="ana-card-title">${title}</div>
@@ -1456,7 +1493,8 @@ function renderAnalytics(){
     mkCard('Win rate by entry model',byEM)+
     mkCard('Win rate by time frame',byTF)+
     mkCard('Win rate by CIC',byCIC)+
-    mkCard('Win rate by direction',byDir);
+    mkCard('Win rate by direction',byDir)+
+    mkCard('Win rate by news',byNews);
 }
 
 /* STATS */
@@ -1503,8 +1541,8 @@ function renderStats(){
 
 function exportCSV(){
   if(!trades.length){alert('No trades to export.');return;}
-  const h=['Date','Time','Account','Session','Asset','Direction','Daily Profile','Daily Bias','CIC','News','News Time','Entry Model','TF','RR Planned','RR Achieved','Risk($)','Profit($)','PnL($)','Result','Emotion','Psychology Notes','Trade Notes'];
-  const r=trades.map(t=>[fixDate(t.date),t.time,t.account,t.session,t.asset,t.dir,t.profile,t.bias,t.cic,t.news||'',t.newsTime||'',t.entryModel,t.tf,t.rrPlan,t.rr,t.risk,t.profit,t.pnl,t.result,t.emotion,(t.psych||'').replace(/,/g,' '),(t.notes||'').replace(/,/g,' ')]);
+  const h=['Date','Time','Account','Session','Asset','Direction','Daily Profile','Daily Bias','CIC','News','News Time','News 2','News Time 2','Entry Model','TF','RR Planned','RR Achieved','Risk($)','Profit($)','PnL($)','Result','Emotion','Psychology Notes','Trade Notes'];
+  const r=trades.map(t=>[fixDate(t.date),t.time,t.account,t.session,t.asset,t.dir,t.profile,t.bias,t.cic,t.news||'',t.newsTime||'',t.news2||'',t.newsTime2||'',t.entryModel,t.tf,t.rrPlan,t.rr,t.risk,t.profit,t.pnl,t.result,t.emotion,(t.psych||'').replace(/,/g,' '),(t.notes||'').replace(/,/g,' ')]);
   const csv=[h,...r].map(x=>x.join(',')).join('\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
