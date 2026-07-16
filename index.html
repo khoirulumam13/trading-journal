@@ -379,7 +379,7 @@ textarea{resize:vertical;min-height:70px;}
 
   <div class="sync-bar">
     <div class="dot syncing" id="sync-dot"></div>
-    <span id="sync-status">Connecting to Google Sheets...</span><span style="font-size:10px;color:var(--hint);margin-left:6px;">build 15</span>
+    <span id="sync-status">Connecting to Google Sheets...</span><span style="font-size:10px;color:var(--hint);margin-left:6px;">build 16</span>
     <button class="btn-s" id="gd-btn" onclick="signInGDManual()" style="font-size:11px;padding:4px 10px;margin-left:8px;display:flex;align-items:center;gap:4px;"><i class="ti ti-brand-google-drive"></i> Connect Drive</button>
     <button class="sync-btn" onclick="loadSheets()" title="Refresh"><i class="ti ti-refresh"></i></button>
   </div>
@@ -849,7 +849,7 @@ function saveDN(){
       imgs:[...dnImgs]
     });
   }
-  localStorage.setItem('ftj_notes', JSON.stringify(dailyNotes));
+  safeSet('ftj_notes',JSON.stringify(slimForStorage(dailyNotes)));
   closeDNModal();
   renderDNList();
   // save to Google Sheets
@@ -866,7 +866,7 @@ function deleteDN(){
   if(!editingDNId)return;
   if(!confirm('Delete this note?'))return;
   dailyNotes = dailyNotes.filter(n=>n.id!=editingDNId);
-  localStorage.setItem('ftj_notes', JSON.stringify(dailyNotes));
+  safeSet('ftj_notes',JSON.stringify(slimForStorage(dailyNotes)));
   closeDNModal();
   renderDNList();
   // save to Google Sheets
@@ -990,6 +990,13 @@ function fixTime(t){
   return s;
 }
 
+function slimForStorage(arr){
+  return (arr||[]).map(x=>({...x, imgs:(Array.isArray(x.imgs)?x.imgs:[]).filter(s=>typeof s==='string'&&s.startsWith('http'))}));
+}
+function safeSet(key,val){
+  try{ localStorage.setItem(key,val); return true; }
+  catch(e){ console.warn('localStorage write skipped for '+key+':',e); return false; }
+}
 function fixDate(d){if(!d)return'';return String(d).slice(0,10);}
 function g(id){return document.getElementById(id);}
 function ps(v){v=+v||0;return v>0?'+$'+v.toFixed(2):v<0?'-$'+Math.abs(v).toFixed(2):'$0';}
@@ -1028,13 +1035,12 @@ async function loadSheets(){
         imgs: localMap[String(t.id)] || []
       }));
       trades.sort((a,b)=>b.id-a.id);
-      // safety net: keep a copy of whatever was local before we overwrite it
+      // safety net — must never break sync if storage is full
       const priorLocal=localStorage.getItem('ftj');
       if(priorLocal && priorLocal!=='[]' && !localStorage.getItem('ftj_backup')){
-        localStorage.setItem('ftj_backup',priorLocal);
-        localStorage.setItem('ftj_backup_at',new Date().toISOString());
+        if(safeSet('ftj_backup',priorLocal)) safeSet('ftj_backup_at',new Date().toISOString());
       }
-      localStorage.setItem('ftj',JSON.stringify(trades));
+      safeSet('ftj',JSON.stringify(slimForStorage(trades)));
       // load daily notes from sheets
       if(d.dailyNotes){
         const localNotes=JSON.parse(localStorage.getItem('ftj_notes')||'[]');
@@ -1065,7 +1071,7 @@ async function loadSheets(){
         });
         dailyNotes=merged;
         dailyNotes.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
-        localStorage.setItem('ftj_notes',JSON.stringify(dailyNotes));
+        safeSet('ftj_notes',JSON.stringify(slimForStorage(dailyNotes)));
       }
       updateH();setSS('synced','Synced · '+trades.length+' trades');
     } else {
@@ -1131,7 +1137,7 @@ async function saveTrade(){
   const btn=g('btn-save');btn.disabled=true;
   showAlrt('ld','<i class="ti ti-loader"></i> Saving...');
   const trade={id:Date.now(),date:fixDate(date),time:g('ft').value,account:g('fac').value,session,asset,dir:g('fdir').value,profile:g('fpr').value,bias:bval,cic:g('fcic').value,news:g('fnews').value,newsTime:g('fnewstime').value,news2:g('fnews2').value,newsTime2:g('fnewstime2').value,entryModel:g('fem').value,tf:g('ftf').value,rrPlan:+g('frrp').value||0,rr:+g('frr').value||0,risk:+g('frisk').value||0,pnl:+g('fpnl').value||0,balance:+g('fbal').value||0,result:g('fres').value,emotion:emo,psych:g('fpsych').value,notes:g('fnotes').value,imgs:[...imgs]};
-  trades.unshift(trade);localStorage.setItem('ftj',JSON.stringify(trades));updateH();
+  trades.unshift(trade);safeSet('ftj',JSON.stringify(slimForStorage(trades)));updateH();
   try{
     const r=await fetch(GS,{method:'POST',body:JSON.stringify({action:'save',trade})});
     const d=await r.json();
@@ -1256,7 +1262,7 @@ async function saveEdit(){
   t.risk=+g('e-risk').value||0;t.pnl=+g('e-pnl').value||0;t.balance=+g('e-bal').value||0;
   t.psych=g('e-psych').value;t.notes=g('e-notes').value;
   const savingId=editId;               // capture BEFORE closeEdit nulls it
-  localStorage.setItem('ftj',JSON.stringify(trades));
+  safeSet('ftj',JSON.stringify(slimForStorage(trades)));
   closeEdit();renderLog();
   setSS('syncing','Saving edit to Google Sheets...');
   try{
@@ -1274,7 +1280,7 @@ async function saveEdit(){
 async function deleteTrade(id){
   if(!confirm('Delete this trade?'))return;
   trades=trades.filter(t=>t.id!=id);
-  localStorage.setItem('ftj',JSON.stringify(trades));
+  safeSet('ftj',JSON.stringify(slimForStorage(trades)));
   updateH();renderLog();
   try{await fetch(GS,{method:'POST',body:JSON.stringify({action:'delete',id})});setSS('synced','Synced · '+trades.length+' trades');}
   catch{setSS('error','Failed to delete from Sheets');}
