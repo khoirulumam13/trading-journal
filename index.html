@@ -379,7 +379,7 @@ textarea{resize:vertical;min-height:70px;}
 
   <div class="sync-bar">
     <div class="dot syncing" id="sync-dot"></div>
-    <span id="sync-status">Connecting to Google Sheets...</span><span style="font-size:10px;color:var(--hint);margin-left:6px;">build 16</span>
+    <span id="sync-status">Connecting to Google Sheets...</span><span style="font-size:10px;color:var(--hint);margin-left:6px;">build 18</span>
     <button class="btn-s" id="gd-btn" onclick="signInGDManual()" style="font-size:11px;padding:4px 10px;margin-left:8px;display:flex;align-items:center;gap:4px;"><i class="ti ti-brand-google-drive"></i> Connect Drive</button>
     <button class="sync-btn" onclick="loadSheets()" title="Refresh"><i class="ti ti-refresh"></i></button>
   </div>
@@ -668,6 +668,11 @@ textarea{resize:vertical;min-height:70px;}
       <div class="sc"><div class="sl">Evaluation P&L</div><div class="sv" id="s-ev">$0</div></div>
       <div class="sc"><div class="sl">Funded P&L</div><div class="sv" id="s-fu">$0</div></div>
       <div class="sc"><div class="sl">Backtest P&L</div><div class="sv" id="s-bt">$0</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:1rem;">
+      <div class="sc"><div class="sl">Evaluation balance</div><div class="sv" id="s-bal-ev">—</div><div class="sl" style="margin:4px 0 0;text-transform:none;letter-spacing:0;" id="s-bal-ev-d"></div></div>
+      <div class="sc"><div class="sl">Funded balance</div><div class="sv" id="s-bal-fu">—</div><div class="sl" style="margin:4px 0 0;text-transform:none;letter-spacing:0;" id="s-bal-fu-d"></div></div>
+      <div class="sc"><div class="sl">Backtest balance</div><div class="sv" id="s-bal-bt">—</div><div class="sl" style="margin:4px 0 0;text-transform:none;letter-spacing:0;" id="s-bal-bt-d"></div></div>
     </div>
     <div class="card">
       <div class="card-title">Wins vs losses</div>
@@ -1240,7 +1245,7 @@ function closeReview(){g('review-modal').classList.remove('open');currentReviewI
 function openEdit(id){
   const t=trades.find(t=>t.id==id);if(!t)return;
   editId=id;
-  ['date','session','time','account','asset','dir','profile','cic','bias','em','tf','result','rrp','rr','risk','pnl','balance','psych','notes'].forEach(k=>{
+  ['date','session','time','account','asset','dir','profile','cic','news','newsTime','news2','newsTime2','bias','em','tf','result','rrp','rr','risk','pnl','balance','psych','notes'].forEach(k=>{
     const field={'date':'e-date','session':'e-session','time':'e-time','account':'e-account','asset':'e-asset','dir':'e-dir','profile':'e-profile','cic':'e-cic','news':'e-news','newsTime':'e-newstime','news2':'e-news2','newsTime2':'e-newstime2','bias':'e-bias','em':'e-em','tf':'e-tf','result':'e-result','rrp':'e-rrp','rr':'e-rr','risk':'e-risk','pnl':'e-pnl','balance':'e-bal','psych':'e-psych','notes':'e-notes'}[k];
     const src={'date':t.date,'session':t.session,'time':t.time,'account':t.account,'asset':t.asset,'dir':t.dir,'profile':t.profile,'cic':t.cic,'news':t.news,'newsTime':t.newsTime,'news2':t.news2,'newsTime2':t.newsTime2,'bias':t.bias,'em':t.entryModel,'tf':t.tf,'result':t.result,'rrp':t.rrPlan,'rr':t.rr,'risk':t.risk,'pnl':t.pnl,'balance':t.balance,'psych':t.psych,'notes':t.notes}[k];
     const el=g(field);if(el)el.value=src||'';
@@ -1553,6 +1558,21 @@ function renderStats(){
   const ee=g('s-ev');ee.textContent=ps(ev);ee.className='sv '+(ev>=0?'g':'r');
   const fe=g('s-fu');fe.textContent=ps(fu);fe.className='sv '+(fu>=0?'g':'r');
   const be=g('s-bt');be.textContent=ps(bt);be.className='sv '+(bt>=0?'g':'r');
+  // latest recorded balance per account (by date, then entry order)
+  const latestBal=(acct)=>{
+    const list=trades.filter(t=>t.account===acct&&(+t.balance||0)>0);
+    if(!list.length) return null;
+    list.sort((a,b)=>{
+      const d=String(b.date||'').localeCompare(String(a.date||''));
+      return d!==0?d:((+b.id||0)-(+a.id||0));
+    });
+    return list[0];
+  };
+  [['Evaluation','s-bal-ev'],['Funded','s-bal-fu'],['Backtest','s-bal-bt']].forEach(([acct,id])=>{
+    const t=latestBal(acct);
+    g(id).textContent = t ? '$'+(+t.balance).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+    g(id+'-d').textContent = t ? 'as of '+t.date : 'no balance recorded';
+  });
   renderBars('b-ses','session');renderBars('b-bias','bias');renderBars('b-cic','cic');
   renderBars('b-em','entryModel');renderBars('b-tf','tf');renderBars('b-as','asset');
 }
