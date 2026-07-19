@@ -379,7 +379,7 @@ textarea{resize:vertical;min-height:70px;}
 
   <div class="sync-bar">
     <div class="dot syncing" id="sync-dot"></div>
-    <span id="sync-status">Connecting to Google Sheets...</span><span style="font-size:10px;color:var(--hint);margin-left:6px;">build 18</span>
+    <span id="sync-status">Connecting to Google Sheets...</span><span style="font-size:10px;color:var(--hint);margin-left:6px;">build 19</span>
     <button class="btn-s" id="gd-btn" onclick="signInGDManual()" style="font-size:11px;padding:4px 10px;margin-left:8px;display:flex;align-items:center;gap:4px;"><i class="ti ti-brand-google-drive"></i> Connect Drive</button>
     <button class="sync-btn" onclick="loadSheets()" title="Refresh"><i class="ti ti-refresh"></i></button>
   </div>
@@ -540,8 +540,10 @@ textarea{resize:vertical;min-height:70px;}
     <div class="cal-hdr">
       <div style="display:flex;align-items:center;gap:8px;">
         <button class="cal-nav-btn" onclick="chMonth(-1)"><i class="ti ti-chevron-left"></i></button>
-        <div class="cal-title" id="cal-title"></div>
+        <select id="cal-month" onchange="jumpCal()" style="width:auto;font-size:15px;font-weight:500;padding:6px 8px;"></select>
+        <select id="cal-year" onchange="jumpCal()" style="width:auto;font-size:15px;font-weight:500;padding:6px 8px;"></select>
         <button class="cal-nav-btn" onclick="chMonth(1)"><i class="ti ti-chevron-right"></i></button>
+        <button class="cal-nav-btn" onclick="calToday()" style="font-size:12px;">Today</button>
       </div>
       <div style="display:flex;gap:10px;align-items:center;font-size:11px;color:var(--muted);">
         <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--green);display:inline-block;"></span>Win</span>
@@ -1295,9 +1297,22 @@ function updateH(){g('hdr-total').textContent=trades.length;}
 
 /* CALENDAR */
 function chMonth(d){cm+=d;if(cm>11){cm=0;cy++;}if(cm<0){cm=11;cy--;}closeDd();renderCal();}
+function jumpCal(){cm=+g('cal-month').value;cy=+g('cal-year').value;closeDd();renderCal();}
+function calToday(){cy=now.getFullYear();cm=now.getMonth();closeDd();renderCal();}
 function renderCal(){
   const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
-  g('cal-title').textContent=months[cm]+' '+cy;
+  // populate month dropdown
+  const msel=g('cal-month');
+  msel.innerHTML=months.map((m,i)=>`<option value="${i}" ${i===cm?'selected':''}>${m}</option>`).join('');
+  // populate year dropdown from data range (fallback to current year +/- span)
+  const yrs=trades.map(t=>+String(fixDate(t.date)).slice(0,4)).filter(y=>y>2000);
+  let minY=Math.min(cy,now.getFullYear(),...(yrs.length?yrs:[cy]));
+  let maxY=Math.max(cy,now.getFullYear(),...(yrs.length?yrs:[cy]));
+  minY-=1; maxY+=1;
+  const ysel=g('cal-year');
+  let yopts='';
+  for(let y=maxY;y>=minY;y--) yopts+=`<option value="${y}" ${y===cy?'selected':''}>${y}</option>`;
+  ysel.innerHTML=yopts;
   const fd=new Date(cy,cm,1).getDay(),days=new Date(cy,cm+1,0).getDate();
   const ts=now.toISOString().slice(0,10);
   const bd={};trades.forEach(t=>{const d=fixDate(t.date);if(!bd[d])bd[d]=[];bd[d].push(t);});
